@@ -26,10 +26,26 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     return Py_BuildValue("i", ckalman_filter(n));
 }
 
-// PyMODINIT_FUNC
-// initkalman_filter(void)
-// {
-//     (void)Py_InitModule(kalman_filter, mymethods);
-//     import_array();
-// }
-// // The mymethods must be an array (usually statically declared) of PyMethodDef structures which contain method names, actual C-functions, a variable indicating whether the method uses keyword arguments or not, and docstrings.
+/* Define functions in module */
+static PyMethodDef KalmanFilterMethods[] = {
+    {"kalman_filter", kalman_filter, METH_VARARGS, "Calculate the Fibonacci numbers (in C)."},
+    {NULL, NULL, 0, NULL} /* Sentinel */
+};
+
+/* Create PyModuleDef structure */
+static struct PyModuleDef KalmanFilterStruct = {
+    PyModuleDef_HEAD_INIT,
+    "kalman_filter",
+    "",
+    -1,
+    KalmanFilterMethods,
+    NULL,
+    NULL,
+    NULL,
+    NULL};
+
+/* Module initialization */
+PyObject *PyInit_kalman_filter(void)
+{
+    return PyModule_Create(&KalmanFilterStruct);
+}
