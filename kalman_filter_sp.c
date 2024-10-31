@@ -1,29 +1,30 @@
 #include <Python.h>
 
 // Logical function:
-int ckalman_filter(int n)
+int ckalman_filter(int n, int m)
 {
-    // printf("Debug: calling ckalman_filter(%d)\n", n);
-    if (n <= 1)
+    printf("Debug: calling ckalman_filter(%d)\n", n);
+    printf("Debug: calling ckalman_filter(%d)\n", m);
+    if (n < m)
         return n;
     else
-        return ckalman_filter(n - 1) + ckalman_filter(n - 2);
+        return m;
 }
 
 /* Wrapped ckalman_filter function */
 static PyObject *kalman_filter(PyObject *self, PyObject *args)
 {
-    int n;
+    int n, m;
 
     /* Parse the input, from Python integer to C int */
-    if (!PyArg_ParseTuple(args, "i", &n))
+    if (!PyArg_ParseTuple(args, "ii", &n, &m))
         return NULL;
     /* If the above function returns -1, an appropriate Python exception will
      * have been set, and the function simply returns NULL
      */
 
     /* Construct the result: a Python integer object */
-    return Py_BuildValue("i", ckalman_filter(n));
+    return Py_BuildValue("i", ckalman_filter(n, m));
 }
 
 /* Define functions in module */
