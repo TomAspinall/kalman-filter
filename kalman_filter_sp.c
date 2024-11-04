@@ -2,51 +2,10 @@
 #include <Python.h>
 #include "numpy/arrayobject.h"
 #include <cblas.h>
-#include <math.h>
-
-/* Macro to transform an index of a 2-dimensional array into an index of a vector */
-#define IDX(i, j, dim0) (i) + (j) * (dim0)
-
-/* Locate NA's in observations at time t*/
-void locateNA(double *vec, int *NAindices, int *positions, int len)
-{
-    int j = 0;
-    for (int i = 0; i < len; i++)
-    {
-        if (isnan(vec[i]))
-            NAindices[i] = 1;
-        else
-        {
-            NAindices[i] = 0;
-            positions[j] = i;
-            j++;
-        }
-    }
-}
-
-/* Number of NA's in observations at time t*/
-int numberofNA(double *vec, int *NAindices, int *positions, int len)
-{
-    locateNA(vec, NAindices, positions, len);
-    int sum = 0;
-    for (int i = 0; i < len; i++)
-        sum += NAindices[i];
-    return sum;
-}
-
-/* Temporary reduced arrays when missing obverations are present */
-void reduce_array(double *array_full, int dim0, int dim1,
-                  double *array_reduced, int *pos, int len)
-{
-    for (int i = 0; i < len; i++)
-    {
-        for (int j = 0; j < dim1; j++)
-            array_reduced[IDX(i, j, len)] = array_full[IDX(pos[i], j, dim0)];
-    }
-}
+#include <utils.h>
 
 // Logical function:
-int ckalman_filter_sequential(
+double ckalman_filter_sequential(
     // n: the total number of observations
     int n,
     // m: the dimension of the state vector
@@ -78,6 +37,7 @@ int ckalman_filter_sequential(
 
     // integers and double precisions used in dcopy and dgemm
     blasint intone = 1;
+    blasint intminusone = -1;
     double dblone = 1.0, dblminusone = -1.0, dblzero = 0.0;
     // To transpose or not transpose matrix
     char *transpose = "T", *dont_transpose = "N";
@@ -127,7 +87,7 @@ int ckalman_filter_sequential(
 
         // How many NA's at time t?
         na_sum = numberofNA(&yt[d * t], NAindices, positions, d);
-        printf("\nNumber of NAs in iter %i: %i\n", t, na_sum);
+        // printf("\nNumber of NAs in iter %i: %i\n", t, na_sum);
 
         /*****************************************/
         /* ---------- case 1: no NA's:---------- */
@@ -138,10 +98,386 @@ int ckalman_filter_sequential(
             cblas_dcopy(blas_m_x_d, &Zt[m_x_d * t * incZt], intone, Zt_t, intone);
             // Increment number of observations:
             N_obs += d;
+
+            // Sequential Processing - Univariate Treatment of the Multivariate Series:
+            for (int SP = 0; SP < d; SP++)
+            {
+                // Get the specific values of Z for SP:
+                for (int j = 0; j < m; j++)
+                {
+                    Zt_tSP[j] = Zt_t[SP + j * d];
+                }
+                // Step 1 - Measurement Error:
+                // Compute Vt[SP,t] = yt[SP,t] - ct[SP,t * incct] - Zt[SP,,t * incZt] %*% at[SP,t]
+
+                // vt[SP,t] = yt[SP,t] - ct[SP,t * incct]
+                V = yt[SP + d * t] - ct[SP + d * t * incct];
+
+                // vt[SP,t] = vt[SP,t] - Zt[SP,, t * incZt] %*% at[,t]
+                cblas_dgemm(
+                    CblasColMajor,
+                    CblasNoTrans,
+                    CblasNoTrans,
+                    intone,
+                    intone,
+                    blas_m,
+                    intminusone,
+                    Zt_tSP,
+                    intone,
+                    at,
+                    blas_m,
+                    dblone,
+                    &V,
+                    intone);
+
+                // Step 2 - Function of Covariance Matrix:
+                // Compute Ft = Zt[SP,,t * incZt] %*% Pt %*% t(Zt[SP,,t * incZt]) + diag(GGt)[SP]
+
+                // First, Let us calculate:
+                // Pt %*% t(Zt[SP,,t * incZt])
+                // because we use this result twice
+                cblas_dgemm(
+                    CblasColMajor,
+                    CblasNoTrans,
+                    CblasTrans,
+                    blas_m,
+                    intone,
+                    blas_m,
+                    dblone,
+                    Pt,
+                    blas_m,
+                    Zt_tSP,
+                    intone,
+                    dblzero,
+                    tmpmxSP,
+                    &m);
+
+                // Ft = GGt[SP]
+                Ft = GGt[SP + (d * t * incGGt)];
+
+                // Ft = Zt[SP,,t*incZt] %*% tmpmxSP + Ft
+                cblas_dgemm(
+                    CblasColMajor,
+                    CblasNoTrans,
+                    CblasNoTrans,
+                    intone,
+                    intone,
+                    blas_m,
+                    dblone,
+                    Zt_tSP,
+                    intone,
+                    tmpmxSP,
+                    blas_m,
+                    dblone,
+                    &Ft,
+                    intone);
+
+                // Step 3 - Calculate the Kalman Gain:
+                // Compute Kt = Pt %*% t(Zt[SP,,i * incZt]) %*% (1/Ft)
+
+                // Inv Ft:
+                tmpFtinv = 1 / Ft;
+
+                // Kt is an m x 1 matrix
+
+                // We already have tmpSPxm:
+                // Kt = tmpmxSP %*% tmpFtinv
+                cblas_dgemm(
+                    CblasColMajor,
+                    CblasNoTrans,
+                    CblasNoTrans,
+                    blas_m,
+                    intone,
+                    intone,
+                    dblone,
+                    tmpmxSP,
+                    blas_m,
+                    &tmpFtinv,
+                    intone,
+                    dblzero,
+                    Kt,
+                    blas_m);
+
+                // Step 4 - Correct State Vector mean and Covariance:
+
+                // Correction to att based upon prediction error:
+                // att = Kt %*% V + att
+                cblas_dgemm(
+                    CblasColMajor,
+                    CblasNoTrans,
+                    CblasNoTrans,
+                    blas_m,
+                    intone,
+                    intone,
+                    dblone,
+                    Kt,
+                    blas_m,
+                    &V,
+                    intone,
+                    dblone,
+                    at,
+                    blas_m);
+
+                // Correction to covariance based upon Kalman Gain:
+                // ptt = ptt - ptt %*% t(Z[SP,,i * incZt]) %*% t(Ktt)
+                // ptt = ptt - tempmxSP %*% t(Ktt)
+                cblas_dgemm(
+                    CblasColMajor,
+                    CblasNoTrans,
+                    CblasTrans,
+                    blas_m,
+                    blas_m,
+                    intone,
+                    dblminusone,
+                    tmpmxSP,
+                    blas_m,
+                    Kt,
+                    blas_m,
+                    dblone,
+                    Pt,
+                    blas_m);
+            }
+        }
+        /*******************************************/
+        /* ---------- case 2: some NA's ---------- */
+        /*******************************************/
+        else
+        {
+            int d_reduced = d - na_sum;
+            // Increment number of observations for the Log-likelihood at the end:
+            N_obs += d_reduced;
+
+            // Temporary, reduced arrays:
+            reduce_array(&yt[d * t], d, 1, yt_temp, positions, d_reduced);
+            reduce_array(&ct[d * t * incct], d, 1, ct_temp, positions, d_reduced);
+            reduce_array(&Zt[m_x_d * t * incZt], d, m, Zt_temp, positions, d_reduced);
+            reduce_array(&GGt[d * t * incGGt], d, 1, GGt_temp, positions, d_reduced);
+
+            // Sequential Processing - Univariate Treatment of the Multivariate Series:
+            for (int SP = 0; SP < d_reduced; SP++)
+            {
+                // Get the specific values of Z for SP:
+                for (int j = 0; j < m; j++)
+                {
+                    Zt_tSP[j] = Zt_temp[SP + j * d_reduced];
+                }
+
+                // Step 1 - Measurement Error:
+                // Compute Vt[SP,t] = yt[SP,t] - ct[SP,t * incct] + Zt[SP,,t * incZt] %*% at[SP,t]
+
+                // vt[SP,t] = yt[SP,t] - ct[SP,t * incct]
+                V = yt_temp[SP] - ct_temp[SP];
+
+                // vt[SP,t] = vt[SP,t] - Zt[SP,, t * incZt] %*% at[,t]
+                cblas_dgemm(
+                    CblasColMajor,
+                    CblasNoTrans,
+                    CblasNoTrans,
+                    intone,
+                    intone,
+                    blas_m,
+                    intminusone,
+                    Zt_tSP,
+                    intone,
+                    at,
+                    blas_m,
+                    dblone,
+                    &V,
+                    intone);
+
+                // Step 2 - Function of Covariance Matrix:
+                // Compute Ft = Zt[SP,,t * incZt] %*% Pt %*% t(Zt[SP,,t * incZt]) + diag(GGt)[SP]
+
+                // First, Let us calculate:
+                // Pt %*% t(Zt[SP,,t * incZt])
+                // because we use this result twice
+
+                cblas_dgemm(
+                    CblasColMajor,
+                    CblasNoTrans,
+                    CblasTrans,
+                    blas_m,
+                    intone,
+                    blas_m,
+                    dblone,
+                    Pt,
+                    blas_m,
+                    Zt_tSP,
+                    intone,
+                    dblzero,
+                    tmpmxSP,
+                    &m);
+
+                // Ft = GGt[SP]
+                Ft = GGt_temp[SP];
+
+                // Ft = Zt[SP,,i*incZt] %*% tmpmxSP + Ft
+                // Ft = Zt[SP,,t*incZt] %*% tmpmxSP + Ft
+                cblas_dgemm(
+                    CblasColMajor,
+                    CblasNoTrans,
+                    CblasNoTrans,
+                    intone,
+                    intone,
+                    blas_m,
+                    dblone,
+                    Zt_tSP,
+                    intone,
+                    tmpmxSP,
+                    blas_m,
+                    dblone,
+                    &Ft,
+                    intone);
+
+                // Step 3 - Calculate the Kalman Gain:
+                // Compute Kt = Pt %*% t(Zt[SP,,i * incZt]) %*% (1/Ft)
+
+                // Inv Ft:
+                tmpFtinv = 1 / Ft;
+
+                // Kt is an m x 1 matrix
+
+                // We already have tmpSPxm:
+                // Kt = tmpmxSP %*% tmpFtinv
+                cblas_dgemm(
+                    CblasColMajor,
+                    CblasNoTrans,
+                    CblasNoTrans,
+                    blas_m,
+                    intone,
+                    intone,
+                    dblone,
+                    tmpmxSP,
+                    blas_m,
+                    &tmpFtinv,
+                    intone,
+                    dblzero,
+                    Kt,
+                    blas_m);
+
+                // Step 4 - Correct State Vector mean and Covariance:
+
+                // Correction to att based upon prediction error:
+                // att = Kt %*% V + att
+                cblas_dgemm(
+                    CblasColMajor,
+                    CblasNoTrans,
+                    CblasNoTrans,
+                    blas_m,
+                    intone,
+                    intone,
+                    dblone,
+                    Kt,
+                    blas_m,
+                    &V,
+                    intone,
+                    dblone,
+                    at,
+                    blas_m);
+
+                // Correction to covariance based upon Kalman Gain:
+                // ptt = ptt - ptt %*% t(Z[SP,,i * incZt]) %*% t(Ktt)
+                // ptt = ptt - tempmxSP %*% t(Ktt)
+                cblas_dgemm(
+                    CblasColMajor,
+                    CblasNoTrans,
+                    CblasTrans,
+                    blas_m,
+                    blas_m,
+                    intone,
+                    dblminusone,
+                    tmpmxSP,
+                    blas_m,
+                    Kt,
+                    blas_m,
+                    dblone,
+                    Pt,
+                    blas_m);
+            }
+            // Step 5 - Update Log-Likelihood Score:
+            loglik -= 0.5 * (log(Ft) + (V * V * tmpFtinv));
         }
 
+        /*********************************************************************************/
+        /*  ---------- ---------- ------- prediction step -------- ---------- ---------- */
+        /*********************************************************************************/
+
+        /* ---------------------------------------------------------------------- */
+        /* at[,t + 1] = dt[,t * incdt] + Tt[,,t * incTt] %*% att[,t]              */
+        /* ---------------------------------------------------------------------- */
+
+        // tmpmxm = Tt[,,i * incTt] %*% att[,i]
+        cblas_dgemm(
+            CblasColMajor,
+            CblasNoTrans,
+            CblasNoTrans,
+            blas_m,
+            intone,
+            blas_m,
+            dblone,
+            &Tt[m_x_m * t * incTt],
+            blas_m,
+            at,
+            blas_m,
+            dblzero,
+            tmpmxSP,
+            blas_m);
+
+        /* at[,t + 1] = dt[,t] */
+        cblas_dcopy(blas_m, &dt[m * t * incdt], intone, at, intone);
+
+        cblas_daxpy(blas_m, dblone, tmpmxSP, intone, at, intone);
+
+        /* ------------------------------------------------------------------------------------- */
+        /* Pt[,,t + 1] = Tt[,,t * incTt] %*% Ptt[,,t] %*% t(Tt[,,t * incTt]) + HHt[,,t * incHHt] */
+        /* ------------------------------------------------------------------------------------- */
+
+        /* tmpmxm = Ptt[,,i] %*% t(Tt[,,i * incTt]) */
+        cblas_dgemm(
+            CblasColMajor,
+            CblasNoTrans,
+            CblasTrans,
+            blas_m,
+            blas_m,
+            blas_m,
+            dblone,
+            Pt,
+            blas_m,
+            &Tt[m_x_m * t * incTt],
+            blas_m,
+            dblzero,
+            tmpmxm,
+            blas_m);
+
+        /* Pt[,,i + 1] = HHt[,,i * incHHt] */
+        cblas_dcopy(blas_m_x_m, &HHt[m_x_m * t * incHHt], intone, Pt, intone);
+
+        /* Pt[,,i + 1] = Tt[,,i * incTt] %*% tmpmxm + Pt[,,i + 1] */
+        cblas_dgemm(
+            CblasColMajor,
+            CblasNoTrans,
+            CblasNoTrans,
+            blas_m,
+            blas_m,
+            blas_m,
+            dblone,
+            &Tt[m_x_m * t * incTt],
+            blas_m,
+            tmpmxm,
+            blas_m,
+            dblone,
+            Pt,
+            blas_m);
+
+        // Iterate:
         t++;
     }
+    /**************************************************************/
+    /* ---------- ---------- end recursions ---------- ---------- */
+    /**************************************************************/
+
+    // Update the final Log-Likelihood Score:
+    loglik -= 0.5 * N_obs * log(2 * M_PI);
 
     // for (npy_intp i = 0; i < n; i++)
     // {
@@ -166,10 +502,7 @@ int ckalman_filter_sequential(
     free(Pt);
 
     // PyArray_malloc();
-    if (n < m)
-        return n;
-    else
-        return m;
+    return loglik;
 }
 
 /* Wrapped ckalman_filter function */
@@ -383,7 +716,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     // Call the C function
     // Py_RETURN_NONE; // No return value
     /* Construct the result: a Python integer object */
-    return Py_BuildValue("i", ckalman_filter_sequential(
+    return Py_BuildValue("d", ckalman_filter_sequential(
                                   n,
                                   m,
                                   d,

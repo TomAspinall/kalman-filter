@@ -6,10 +6,10 @@ import numpy as np
 cblas_include_dir = "C:\\Users\\Tpm Aspinall\\Documents\\Work\\OpenBLAS-0.3.28-x64-64\\include\\"
 cblas_library_dir = "C:\\Users\\Tpm Aspinall\\Documents\\Work\\OpenBLAS-0.3.28-x64-64\\lib\\"
 numpy_include_dir = np.get_include()
-include_dirs = [numpy_include_dir, cblas_include_dir]
+include_dirs = [numpy_include_dir, cblas_include_dir, '.']
 library_dirs = [cblas_library_dir]
 
-c_sources = ["kalman_filter_sp.c"]
+c_sources = ["kalman_filter_sp.c", "utils.c"]
 
 module = Extension("kalman_filter", sources=c_sources,
                    libraries=["libopenblas"],
