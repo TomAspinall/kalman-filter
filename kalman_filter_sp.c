@@ -29,11 +29,11 @@ double ckalman_filter_sequential(
     blasint blas_d = (blasint)d;
 
     // Utilised array dimensions:
-    int m_x_m = m * m;
-    int m_x_d = m * d;
+    blasint m_x_m = m * m;
+    blasint m_x_d = m * d;
 
-    blasint blas_m_x_m = (blasint)m_x_m;
-    blasint blas_m_x_d = (blasint)m_x_d;
+    // blasint blas_m_x_m = (blasint)m_x_m;
+    // blasint blas_m_x_d = (blasint)m_x_d;
 
     // integers and double precisions used in dcopy and dgemm
     blasint intone = 1;
@@ -79,7 +79,7 @@ double ckalman_filter_sequential(
     cblas_dcopy(blas_m, a0, intone, at, intone);
 
     /* Pt = P0 */
-    cblas_dcopy(blas_m_x_m, P0, intone, Pt, intone);
+    cblas_dcopy(m_x_m, P0, intone, Pt, intone);
 
     // Recursion across all time steps:
     while (t < n)
@@ -95,7 +95,7 @@ double ckalman_filter_sequential(
         if (na_sum == 0)
         {
             // Create Zt for time t
-            cblas_dcopy(blas_m_x_d, &Zt[m_x_d * t * incZt], intone, Zt_t, intone);
+            cblas_dcopy(m_x_d, &Zt[m_x_d * t * incZt], intone, Zt_t, intone);
             // Increment number of observations:
             N_obs += d;
 
@@ -121,7 +121,7 @@ double ckalman_filter_sequential(
                     intone,
                     intone,
                     blas_m,
-                    intminusone,
+                    dblminusone,
                     Zt_tSP,
                     intone,
                     at,
@@ -150,7 +150,7 @@ double ckalman_filter_sequential(
                     intone,
                     dblzero,
                     tmpmxSP,
-                    &m);
+                    blas_m);
 
                 // Ft = GGt[SP]
                 Ft = GGt[SP + (d * t * incGGt)];
@@ -276,7 +276,7 @@ double ckalman_filter_sequential(
                     intone,
                     intone,
                     blas_m,
-                    intminusone,
+                    dblminusone,
                     Zt_tSP,
                     intone,
                     at,
@@ -306,7 +306,7 @@ double ckalman_filter_sequential(
                     intone,
                     dblzero,
                     tmpmxSP,
-                    &m);
+                    blas_m);
 
                 // Ft = GGt[SP]
                 Ft = GGt_temp[SP];
@@ -450,7 +450,7 @@ double ckalman_filter_sequential(
             blas_m);
 
         /* Pt[,,i + 1] = HHt[,,i * incHHt] */
-        cblas_dcopy(blas_m_x_m, &HHt[m_x_m * t * incHHt], intone, Pt, intone);
+        cblas_dcopy(m_x_m, &HHt[m_x_m * t * incHHt], intone, Pt, intone);
 
         /* Pt[,,i + 1] = Tt[,,i * incTt] %*% tmpmxm + Pt[,,i + 1] */
         cblas_dgemm(
@@ -478,12 +478,6 @@ double ckalman_filter_sequential(
 
     // Update the final Log-Likelihood Score:
     loglik -= 0.5 * N_obs * log(2 * M_PI);
-
-    // for (npy_intp i = 0; i < n; i++)
-    // {
-    //     a0[i] += P0[i];
-    //     printf("Debug: Pt is: (%f)\n", Pt[i]);
-    // }
 
     // Memory clean - vectors / matrices:
     free(tmpmxSP);
@@ -605,16 +599,16 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     npy_intp *yt_dims = PyArray_DIMS(yt_arr);
 
     // Max observations per time point:
-    int d = yt_dims[0];
+    npy_intp d = yt_dims[0];
     // Total observations:
-    int n = yt_dims[1];
+    npy_intp n = yt_dims[1];
     // Number of state variables:
-    int m = a0_dims[0];
+    npy_intp m = a0_dims[0];
     // npy_intp one = 1;
 
-    printf("Debug: n is: (%d)\n", n);
-    printf("Debug: m is: (%d)\n", m);
-    printf("Debug: d is: (%d)\n", d);
+    printf("Debug: n is: (%Id)\n", n);
+    printf("Debug: m is: (%Id)\n", m);
+    printf("Debug: d is: (%Id)\n", d);
 
     // Check for consistency in array shapes:
 
@@ -626,71 +620,71 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     }
     if (dt_dims[0] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension [0] of matrix 'dt' does not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimension 1 of matrix 'dt' does not match length of state vector 'a0'");
         return NULL;
     }
     if (Zt_dims[1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension [1] of matrix 'Zt' does not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of matrix 'Zt' does not match length of state vector 'a0'");
         return NULL;
     }
     if (Tt_dims[0] != m || Tt_dims[1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimensions 0 or 1 of matrix 'Tt' does not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'Tt' does not match length of state vector 'a0'");
         return NULL;
     }
     if (HHt_dims[0] != m || HHt_dims[1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimensions 0 or 1 of matrix 'HHt' does not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'HHt' does not match length of state vector 'a0'");
         return NULL;
     }
 
     // Total observations (n):
-    // if (dt_dims[1] != n && dt_dims[1] != one)
-    // {
-    //     PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'dt' does not match either 1 or number of observations/columns of 'yt'");
-    //     return NULL;
-    // }
-    // if (ct_dims[1] != n && ct_dims[1] != one)
-    // {
-    //     PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'dt' does not match either 1 or number of observations/columns of 'yt'");
-    //     return NULL;
-    // }
-    // if (Tt_dims[2] != n && Tt_dims[2] != one)
-    // {
-    //     PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'dt' does not match either 1 or number of observations/columns of 'yt'");
-    //     return NULL;
-    // }
-    // if (Zt_dims[2] != n && Zt_dims[2] != one)
-    // {
-    //     PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'dt' does not match either 1 or number of observations/columns of 'yt'");
-    //     return NULL;
-    // }
-    // if (HHt_dims[2] != n && HHt_dims[2] != one)
-    // {
-    //     PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'dt' does not match either 1 or number of observations/columns of 'yt'");
-    //     return NULL;
-    // }
-    // if (GGt_dims[1] != n && GGt_dims[1] != one)
-    // {
-    //     PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'dt' does not match either 1 or number of observations/columns of 'yt'");
-    //     return NULL;
-    // }
+    if (dt_dims[1] != n && dt_dims[1] != 1)
+    {
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'dt' does not match either 1 or number of observations/columns of 'yt'");
+        return NULL;
+    }
+    if (ct_dims[1] != n && ct_dims[1] != 1)
+    {
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not match either 1 or number of observations/columns of 'yt'");
+        return NULL;
+    }
+    if (PyArray_NDIM(Tt_arr) > 2 && Tt_dims[2] != n && Tt_dims[2] != 1)
+    {
+        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Tt' does not match either 1 or number of observations/columns of 'yt'");
+        return NULL;
+    }
+    if (PyArray_NDIM(Zt_arr) > 2 && Zt_dims[2] != n && Zt_dims[2] != 1)
+    {
+        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Zt' does not match either 1 or number of observations/columns of 'yt'");
+        return NULL;
+    }
+    if (PyArray_NDIM(HHt_arr) > 2 && HHt_dims[2] != n && HHt_dims[2] != 1)
+    {
+        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'HHt' does not match either 1 or number of observations/columns of 'yt'");
+        return NULL;
+    }
+    if (GGt_dims[1] != n && GGt_dims[1] != 1)
+    {
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'GGt' does not match either 1 or number of observations/columns of 'yt'");
+        return NULL;
+    }
 
     // Max observations per time point (d):
     if (ct_dims[0] != d)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 0 of ndarray 'ct' does not equal dimension 0 of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'ct' does not equal dimension 0 of 'yt'");
         return NULL;
     }
     if (Zt_dims[0] != d)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 0 of ndarray 'Zt' does not equal dimension 0 of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'Zt' does not equal dimension 0 of 'yt'");
         return NULL;
     }
     if (GGt_dims[0] != d)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 0 of ndarray 'GGt' does not equal dimension 0 of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'GGt' does not equal dimension 0 of 'yt'");
         return NULL;
     }
 
@@ -717,9 +711,9 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     // Py_RETURN_NONE; // No return value
     /* Construct the result: a Python integer object */
     return Py_BuildValue("d", ckalman_filter_sequential(
-                                  n,
-                                  m,
-                                  d,
+                                  (int)n,
+                                  (int)m,
+                                  (int)d,
                                   a0,
                                   P0,
                                   dt, incdt,
