@@ -5,7 +5,7 @@
 #include <utils.h>
 
 // Logical function:
-double ckalman_filter_sequential(
+PyObject *ckalman_filter_verbose(
     // n: the total number of observations
     int n,
     // m: the dimension of the state vector
@@ -484,7 +484,6 @@ double ckalman_filter_sequential(
     // Memory clean - vectors / matrices:
     free(tmpmxSP);
     free(tmpmxm);
-
     free(positions);
     free(yt_temp);
     free(ct_temp);
@@ -499,5 +498,28 @@ double ckalman_filter_sequential(
 
     // PyArray_malloc();
 
-    return loglik;
+    // Get array output objects:
+
+    npy_intp dims[2] = {1, (npy_intp)n};
+
+    PyArrayObject *
+        array1 = (PyArrayObject *)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, yt);
+    if (!array1)
+    {
+        PyErr_SetString(PyExc_MemoryError, "Failed to create array1");
+        return NULL;
+    }
+    // Set the array to not free the data when it is deallocated
+    // PyArray_CLEARFLAGS(array1, NPY_ARRAY_OWNDATA);
+    // PyArray_CLEARFLAGS(array2, NPY_ARRAY_OWNDATA);
+    // PyArray_CLEARFLAGS(array3, NPY_ARRAY_OWNDATA);
+
+    // PyObject *result = PyTuple_Pack(2, array1, array2);
+    // PyObject *result = PyTuple_Pack(3, array1);
+
+    // Return the existing array as a NumPy array
+    PyArray_CLEARFLAGS(array1, NPY_ARRAY_OWNDATA);
+
+    return (PyObject *)array1;
+    // return result;
 }
