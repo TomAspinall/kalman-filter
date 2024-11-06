@@ -557,14 +557,14 @@ static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
     PyArrayObject *HHt_output = (PyArrayObject *)PyArray_SimpleNew(2, HHt_dims, NPY_DOUBLE);
 
     // Copy arrays into numpy objects:
-    memcpy(PyArray_DATA(a0_output), a0_result, 2 * 1 * sizeof(double));   // Copy data
-    memcpy(PyArray_DATA(yt_output), yt_result, 1 * 10 * sizeof(double));  // Copy data
-    memcpy(PyArray_DATA(P0_output), P0_result, 2 * 2 * sizeof(double));   // Copy data
-    memcpy(PyArray_DATA(dt_output), dt_result, 2 * 1 * sizeof(double));   // Copy data
-    memcpy(PyArray_DATA(ct_output), ct_result, 1 * 1 * sizeof(double));   // Copy data
-    memcpy(PyArray_DATA(Tt_output), Tt_result, 2 * 2 * sizeof(double));   // Copy data
-    memcpy(PyArray_DATA(Zt_output), Zt_result, 1 * 2 * sizeof(double));   // Copy data
-    memcpy(PyArray_DATA(HHt_output), HHt_result, 2 * 2 * sizeof(double)); // Copy data
+    memcpy(PyArray_DATA(a0_output), a0_result, 2 * 1 * sizeof(double));
+    memcpy(PyArray_DATA(yt_output), yt_result, 1 * 10 * sizeof(double));
+    memcpy(PyArray_DATA(P0_output), P0_result, 2 * 2 * sizeof(double));
+    memcpy(PyArray_DATA(dt_output), dt_result, 2 * 1 * sizeof(double));
+    memcpy(PyArray_DATA(ct_output), ct_result, 1 * 1 * sizeof(double));
+    memcpy(PyArray_DATA(Tt_output), Tt_result, 2 * 2 * sizeof(double));
+    memcpy(PyArray_DATA(Zt_output), Zt_result, 1 * 2 * sizeof(double));
+    memcpy(PyArray_DATA(HHt_output), HHt_result, 2 * 2 * sizeof(double));
 
     // Create a new dictionary:
     PyObject *result_dict = PyDict_New();
