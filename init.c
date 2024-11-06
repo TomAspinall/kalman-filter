@@ -539,30 +539,47 @@ static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
     // Get the two results from the output (a0 and yt)
     double *a0_result = kalman_filter_output[0];
     double *yt_result = kalman_filter_output[1];
+    double *P0_result = kalman_filter_output[2];
+    double *dt_result = kalman_filter_output[3];
+    double *ct_result = kalman_filter_output[4];
+    double *Tt_result = kalman_filter_output[5];
+    double *Zt_result = kalman_filter_output[6];
+    double *HHt_result = kalman_filter_output[7];
 
-    // Create NumPy arrays from the results (a0 and yt)
-    PyArrayObject *a0_array = (PyArrayObject *)PyArray_SimpleNew(1, a0_dims, NPY_DOUBLE);
-    memcpy(PyArray_DATA(a0_array), a0_result, m * sizeof(double)); // Copy data
-    PyArrayObject *yt_array = (PyArrayObject *)PyArray_SimpleNew(2, yt_dims, NPY_DOUBLE);
-    memcpy(PyArray_DATA(yt_array), yt_result, d * n * sizeof(double)); // Copy data
+    // Create NumPy arrays from the results:
+    PyArrayObject *a0_output = (PyArrayObject *)PyArray_SimpleNew(1, a0_dims, NPY_DOUBLE);
+    PyArrayObject *yt_output = (PyArrayObject *)PyArray_SimpleNew(2, yt_dims, NPY_DOUBLE);
+    PyArrayObject *P0_output = (PyArrayObject *)PyArray_SimpleNew(1, P0_dims, NPY_DOUBLE);
+    PyArrayObject *dt_output = (PyArrayObject *)PyArray_SimpleNew(1, dt_dims, NPY_DOUBLE);
+    PyArrayObject *ct_output = (PyArrayObject *)PyArray_SimpleNew(2, ct_dims, NPY_DOUBLE);
+    PyArrayObject *Tt_output = (PyArrayObject *)PyArray_SimpleNew(1, Tt_dims, NPY_DOUBLE);
+    PyArrayObject *Zt_output = (PyArrayObject *)PyArray_SimpleNew(2, Zt_dims, NPY_DOUBLE);
+    PyArrayObject *HHt_output = (PyArrayObject *)PyArray_SimpleNew(2, HHt_dims, NPY_DOUBLE);
+
+    // Copy arrays into numpy objects:
+    memcpy(PyArray_DATA(a0_output), a0_result, 2 * 1 * sizeof(double));   // Copy data
+    memcpy(PyArray_DATA(yt_output), yt_result, 1 * 10 * sizeof(double));  // Copy data
+    memcpy(PyArray_DATA(P0_output), P0_result, 2 * 2 * sizeof(double));   // Copy data
+    memcpy(PyArray_DATA(dt_output), dt_result, 2 * 1 * sizeof(double));   // Copy data
+    memcpy(PyArray_DATA(ct_output), ct_result, 1 * 1 * sizeof(double));   // Copy data
+    memcpy(PyArray_DATA(Tt_output), Tt_result, 2 * 2 * sizeof(double));   // Copy data
+    memcpy(PyArray_DATA(Zt_output), Zt_result, 1 * 2 * sizeof(double));   // Copy data
+    memcpy(PyArray_DATA(HHt_output), HHt_result, 2 * 2 * sizeof(double)); // Copy data
 
     // Return the results as a tuple of NumPy arrays
-    PyObject *result_tuple = PyTuple_Pack(2, (PyObject *)a0_array, (PyObject *)yt_array);
+    PyObject *result_tuple = PyTuple_Pack(
+        8,
+        (PyObject *)a0_output,
+        (PyObject *)yt_output,
+        (PyObject *)P0_output,
+        (PyObject *)dt_output,
+        (PyObject *)ct_output,
+        (PyObject *)Tt_output,
+        (PyObject *)Zt_output,
+        (PyObject *)HHt_output);
 
     // Clean up the memory for the raw data
     free(kalman_filter_output); // Free the memory allocated for the result tuple
-
-    // Create a NumPy array from existing data
-    // PyArrayObject *result = (PyArrayObject *)PyArray_SimpleNew(2, yt_dims, NPY_DOUBLE);
-    // double *result_data = (double *)PyArray_DATA(result);
-
-    // Copy the result data into the new array
-    // memcpy(result_data, kalman_filter_output, sizeof(double) * yt_dims[0] * yt_dims[1]);
-
-    // PyArrayObject *array = (PyArrayObject *)PyArray_SimpleNew(2, yt_dims, NPY_DOUBLE, kalman_filter_output);
-
-    // Return the existing array as a NumPy array
-    // PyArray_CLEARFLAGS(kalman_filter_output, NPY_ARRAY_OWNDATA);
 
     return (PyObject *)result_tuple;
 }

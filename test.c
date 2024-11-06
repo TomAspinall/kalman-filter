@@ -24,12 +24,16 @@ double *ckalman_filter_test(
     double *yt)
 {
 
-    // Create a result tuple with two arrays to return
-    double **results = (double **)malloc(2 * sizeof(double *));
+    // Create an array of addresses of output arrays:
+    double **results = (double **)malloc(8 * sizeof(double *));
     results[0] = a0;
     results[1] = yt;
+    results[2] = P0;
+    results[3] = dt;
+    results[4] = ct;
+    results[5] = Tt;
+    results[6] = Zt;
+    results[7] = HHt;
 
     return results; // Return the two arrays
-
-    // return yt;
 }
