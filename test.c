@@ -21,7 +21,8 @@ double **ckalman_filter_test(
     double *Zt, int incZt,
     double *HHt, int incHHt,
     double *GGt, int incGGt,
-    double *yt)
+    double *yt,
+    int *loglik)
 {
 
     // Coerce dtypes:
@@ -44,9 +45,6 @@ double **ckalman_filter_test(
     double V;
     double Ft;
     double tmpFtinv;
-
-    // Function output:
-    double loglik = 0;
 
     // Time-series iterator:
     int t = 0;
@@ -82,7 +80,7 @@ double **ckalman_filter_test(
     /**************************************************************/
 
     // Update the final Log-Likelihood Score:
-    loglik -= 0.5 * N_obs * log(2 * M_PI);
+    *loglik -= 0.5 * N_obs * log(2 * M_PI);
 
     // Memory clean - vectors / matrices:
     free(tmpmxSP);
@@ -110,5 +108,5 @@ double **ckalman_filter_test(
     results[6] = Zt;
     results[7] = HHt;
 
-    return results; // Return the two arrays
+    return results;
 }

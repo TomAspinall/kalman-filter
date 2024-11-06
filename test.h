@@ -17,4 +17,5 @@ double **ckalman_filter_test(
     double *Zt, int incZt,
     double *HHt, int incHHt,
     double *GGt, int incGGt,
-    double *yt);
+    double *yt,
+    int *loglik);

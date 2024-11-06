@@ -520,6 +520,9 @@ static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
     double *GGt = (double *)PyArray_DATA(GGt_arr);
     double *yt = (double *)PyArray_DATA(yt_arr);
 
+    // Directly manipulate object inside function:
+    double *loglik = 0;
+
     // Call the C function
     /* Construct the result: a tuple of numpy arrays */
     double **kalman_filter_output = ckalman_filter_test(
@@ -534,7 +537,8 @@ static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
         Zt, incZt,
         HHt, incHHt,
         GGt, incGGt,
-        yt);
+        yt,
+        &loglik);
 
     // Get the two results from the output (a0 and yt)
     double *a0_result = kalman_filter_output[0];
@@ -578,6 +582,8 @@ static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
     PyDict_SetItemString(result_dict, "Tt", (PyObject *)Tt_output);
     PyDict_SetItemString(result_dict, "Zt", (PyObject *)Zt_output);
     PyDict_SetItemString(result_dict, "HHt", (PyObject *)HHt_output);
+    // Pointer to value:
+    PyDict_SetItemString(result_dict, "log_likelihood", PyLong_FromLong(loglik));
 
     // Clean up the memory for the raw data
     free(kalman_filter_output);
