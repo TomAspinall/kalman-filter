@@ -566,22 +566,23 @@ static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
     memcpy(PyArray_DATA(Zt_output), Zt_result, 1 * 2 * sizeof(double));   // Copy data
     memcpy(PyArray_DATA(HHt_output), HHt_result, 2 * 2 * sizeof(double)); // Copy data
 
-    // Return the results as a tuple of NumPy arrays
-    PyObject *result_tuple = PyTuple_Pack(
-        8,
-        (PyObject *)a0_output,
-        (PyObject *)yt_output,
-        (PyObject *)P0_output,
-        (PyObject *)dt_output,
-        (PyObject *)ct_output,
-        (PyObject *)Tt_output,
-        (PyObject *)Zt_output,
-        (PyObject *)HHt_output);
+    // Create a new dictionary:
+    PyObject *result_dict = PyDict_New();
+
+    // Add arrays to the dictionary with keys
+    PyDict_SetItemString(result_dict, "a0", (PyObject *)a0_output);
+    PyDict_SetItemString(result_dict, "yt", (PyObject *)yt_output);
+    PyDict_SetItemString(result_dict, "P0", (PyObject *)P0_output);
+    PyDict_SetItemString(result_dict, "dt", (PyObject *)dt_output);
+    PyDict_SetItemString(result_dict, "ct", (PyObject *)ct_output);
+    PyDict_SetItemString(result_dict, "Tt", (PyObject *)Tt_output);
+    PyDict_SetItemString(result_dict, "Zt", (PyObject *)Zt_output);
+    PyDict_SetItemString(result_dict, "HHt", (PyObject *)HHt_output);
 
     // Clean up the memory for the raw data
-    free(kalman_filter_output); // Free the memory allocated for the result tuple
+    free(kalman_filter_output);
 
-    return (PyObject *)result_tuple;
+    return result_dict;
 }
 
 /* Define functions in module */
