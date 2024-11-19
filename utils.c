@@ -1,18 +1,54 @@
 #include <Python.h>
+#include "numpy/arrayobject.h"
 
 /* Macro to transform an index of a 2-dimensional array into an index of a vector */
-#define IDX(i, j, dim0) (i) + (j) * (dim0)
+#define IDX(i, j, ncols) ((i) * (ncols) + (j))
+/* Macro to transform an index of a 3-dimensional array into an index of a vector */
+#define IDX_3D(i, j, k, ncols, ndepth) ((i) * (ncols) * (ndepth) + (j) * (ndepth) + (k))
 
 /* Print arrays */
+/* Print a 3D array */
+void print_array_3D(double *data, int i, int j, int k, const char *lab)
+{
+    printf("\n'%s':\n", lab);
+
+    // Loop through the 3D matrix
+    for (int icnt = 0; icnt < i; icnt++) // Loop over rows
+    {
+        for (int jcnt = 0; jcnt < j; jcnt++) // Loop over columns
+        {
+            for (int kcnt = 0; kcnt < k; kcnt++) // Loop over depth
+            {
+                // Print the current element in the 3D matrix
+                printf("%3.6f   ", data[IDX_3D(icnt, jcnt, kcnt, j, k)]);
+            }
+            printf("\n"); // Print a newline after each row
+        }
+        printf("\n"); // Add an extra newline between different rows
+    }
+}
+
 void print_array(double *data, int i, int j, const char *lab)
 {
-    int icnt, jcnt;
     printf("\n'%s':\n", lab);
-    for (icnt = 0; icnt < i; icnt++)
+    for (int icnt = 0; icnt < i; icnt++)
     {
-        for (jcnt = 0; jcnt < j; jcnt++)
+        for (int jcnt = 0; jcnt < j; jcnt++)
         {
-            printf("%3.6f   ", data[IDX(icnt, jcnt, i)]);
+            printf("%3.6f   ", data[IDX(icnt, jcnt, j)]);
+        }
+        printf("\n");
+    }
+}
+
+void print_npy_intp_array(npy_intp *data, int i, int j, const char *lab)
+{
+    printf("\n'%s':\n", lab);
+    for (int icnt = 0; icnt < i; icnt++)
+    {
+        for (int jcnt = 0; jcnt < j; jcnt++)
+        {
+            printf("%Id   ", data[IDX(icnt, jcnt, j)]);
         }
         printf("\n");
     }
