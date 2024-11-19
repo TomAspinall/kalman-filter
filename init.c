@@ -3,6 +3,7 @@
 #include "kalman_filter_sp.h"
 #include "kalman_filter_verbose.h"
 #include "test.h"
+#include "utils.h"
 
 /* Wrapped ckalman_filter function */
 static PyObject *kalman_filter(PyObject *self, PyObject *args)
@@ -111,9 +112,11 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     npy_intp m = a0_dims[0];
     // npy_intp one = 1;
 
+#ifdef DEBUGMODE
     printf("Debug: n is: (%Id)\n", n);
     printf("Debug: m is: (%Id)\n", m);
     printf("Debug: d is: (%Id)\n", d);
+#endif
 
     // Check for consistency in array shapes:
 
@@ -335,9 +338,11 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     npy_intp m = a0_dims[0];
     // npy_intp one = 1;
 
+#ifdef DEBUGMODE
     printf("Debug: n is: (%Id)\n", n);
     printf("Debug: m is: (%Id)\n", m);
     printf("Debug: d is: (%Id)\n", d);
+#endif
 
     // Check for consistency in array shapes:
 
@@ -454,16 +459,81 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 
     return kalman_filter_output;
 }
+
 /* Wrapped ckalman_filter function */
 static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
 {
 
-    // Initialise variable arguments:
-    PyObject *input_a0, *input_P0, *input_dt, *input_ct, *input_Tt, *input_Zt, *input_HHt, *input_GGt, *input_yt;
-
-    /* Parse the input tuple, expecting 8 NumPy ndarrays */
-    if (!PyArg_ParseTuple(args, "OOOOOOOOO", &input_a0, &input_P0, &input_dt, &input_ct, &input_Tt, &input_Zt, &input_HHt, &input_GGt, &input_yt))
+    PyObject *kwargs; // We'll accept a dictionary (kwargs)
+    if (!PyArg_ParseTuple(args, "O", &kwargs))
     {
+        return NULL; // Error parsing tuple (we only expect a single dictionary)
+    }
+
+    if (!PyDict_Check(kwargs))
+    {
+        PyErr_SetString(PyExc_TypeError, "Expected a dictionary");
+        return NULL;
+    }
+
+    // if (input_validation(kwargs, kwargs))
+    // {
+    //     return NULL; // return error;
+    // };
+
+    // Extract the NumPy array from the dictionary
+    PyObject *input_a0 = PyDict_GetItemString(kwargs, "a0");
+    if (input_a0 == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'a0' key");
+        return NULL;
+    }
+    PyObject *input_P0 = PyDict_GetItemString(kwargs, "P0");
+    if (input_P0 == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'P0' key");
+        return NULL;
+    }
+    PyObject *input_dt = PyDict_GetItemString(kwargs, "dt");
+    if (input_dt == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'dt' key");
+        return NULL;
+    }
+    PyObject *input_ct = PyDict_GetItemString(kwargs, "ct");
+    if (input_ct == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'Ct' key");
+        return NULL;
+    }
+    PyObject *input_Tt = PyDict_GetItemString(kwargs, "Tt");
+    if (input_Tt == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'Tt' key");
+        return NULL;
+    }
+    PyObject *input_Zt = PyDict_GetItemString(kwargs, "Zt");
+    if (input_Zt == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'Zt' key");
+        return NULL;
+    }
+    PyObject *input_HHt = PyDict_GetItemString(kwargs, "HHt");
+    if (input_HHt == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'HHt' key");
+        return NULL;
+    }
+    PyObject *input_GGt = PyDict_GetItemString(kwargs, "GGt");
+    if (input_GGt == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'GGt' key");
+        return NULL;
+    }
+    PyObject *input_yt = PyDict_GetItemString(kwargs, "yt");
+    if (input_yt == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'yt' key");
         return NULL;
     }
 
@@ -497,9 +567,24 @@ static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
     npy_intp m = a0_dims[0];
     // npy_intp one = 1;
 
+#ifdef DEBUGMODE
+    // Print algorithm dimensions:
     printf("Debug: n is: (%Id)\n", n);
     printf("Debug: m is: (%Id)\n", m);
     printf("Debug: d is: (%Id)\n", d);
+
+    // Print input dimensions:
+    print_npy_intp_array(a0_dims, 1, 1, "a0_dims");
+    print_npy_intp_array(P0_dims, 1, 2, "P0_dims");
+    print_npy_intp_array(dt_dims, 1, 2, "dt_dims");
+    print_npy_intp_array(ct_dims, 1, 2, "ct_dims");
+    print_npy_intp_array(Tt_dims, 1, 3, "Tt_dims");
+    print_npy_intp_array(Zt_dims, 1, 3, "Zt_dims");
+    print_npy_intp_array(HHt_dims, 1, 3, "HHt_dims");
+    print_npy_intp_array(GGt_dims, 1, 2, "GGt_dims");
+    print_npy_intp_array(yt_dims, 1, 2, "yt_dims");
+
+#endif
 
     // Fetch increment logic:
     int incdt = dt_dims[1] == n;
@@ -508,6 +593,16 @@ static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
     int incZt = Zt_dims[2] == n;
     int incHHt = HHt_dims[2] == n;
     int incGGt = GGt_dims[1] == n;
+
+#ifdef DEBUGMODE
+    // Print time variant increments:
+    printf("incdt: %d\n", incdt);
+    printf("incct: %d\n", incct);
+    printf("incTt: %d\n", incTt);
+    printf("incZt: %d\n", incZt);
+    printf("incHHt: %d\n", incHHt);
+    printf("incGGt: %d\n", incGGt);
+#endif
 
     // Fetch data pointers:
     double *a0 = (double *)PyArray_DATA(a0_arr);
@@ -520,8 +615,19 @@ static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
     double *GGt = (double *)PyArray_DATA(GGt_arr);
     double *yt = (double *)PyArray_DATA(yt_arr);
 
-    // Directly manipulate object inside function:
-    double *loglik = 0;
+#ifdef DEBUGMODE
+    // Print arrays:
+    print_array(a0, (int)m, 1, "a0");
+    print_array(P0, (int)m, (int)m, "P0");
+    print_array(dt, (int)m, 1, "dt");
+    print_array(ct, (int)d, 1, "ct");
+    print_array_3D(Tt, (int)m, (int)m, 1, "Tt");
+    print_array_3D(Zt, (int)d, (int)m, 1, "Zt");
+    print_array(yt, (int)d, (int)n, "yt");
+#endif
+
+    // Dynamically allocate memory for a double
+    double *loglik = (double *)malloc(sizeof(double));
 
     // Call the C function
     /* Construct the result: a tuple of numpy arrays */
@@ -538,7 +644,7 @@ static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
         HHt, incHHt,
         GGt, incGGt,
         yt,
-        &loglik);
+        loglik);
 
     // Get the two results from the output (a0 and yt)
     double *a0_result = kalman_filter_output[0];
@@ -553,22 +659,46 @@ static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
     // Create NumPy arrays from the results:
     PyArrayObject *a0_output = (PyArrayObject *)PyArray_SimpleNew(1, a0_dims, NPY_DOUBLE);
     PyArrayObject *yt_output = (PyArrayObject *)PyArray_SimpleNew(2, yt_dims, NPY_DOUBLE);
-    PyArrayObject *P0_output = (PyArrayObject *)PyArray_SimpleNew(1, P0_dims, NPY_DOUBLE);
-    PyArrayObject *dt_output = (PyArrayObject *)PyArray_SimpleNew(1, dt_dims, NPY_DOUBLE);
+    PyArrayObject *P0_output = (PyArrayObject *)PyArray_SimpleNew(2, P0_dims, NPY_DOUBLE);
+    PyArrayObject *dt_output = (PyArrayObject *)PyArray_SimpleNew(2, dt_dims, NPY_DOUBLE);
     PyArrayObject *ct_output = (PyArrayObject *)PyArray_SimpleNew(2, ct_dims, NPY_DOUBLE);
-    PyArrayObject *Tt_output = (PyArrayObject *)PyArray_SimpleNew(1, Tt_dims, NPY_DOUBLE);
-    PyArrayObject *Zt_output = (PyArrayObject *)PyArray_SimpleNew(2, Zt_dims, NPY_DOUBLE);
-    PyArrayObject *HHt_output = (PyArrayObject *)PyArray_SimpleNew(2, HHt_dims, NPY_DOUBLE);
+    PyArrayObject *Tt_output = (PyArrayObject *)PyArray_SimpleNew(3, Tt_dims, NPY_DOUBLE);
+    PyArrayObject *Zt_output = (PyArrayObject *)PyArray_SimpleNew(3, Zt_dims, NPY_DOUBLE);
+    PyArrayObject *HHt_output = (PyArrayObject *)PyArray_SimpleNew(3, HHt_dims, NPY_DOUBLE);
 
     // Copy arrays into numpy objects:
-    memcpy(PyArray_DATA(a0_output), a0_result, 2 * 1 * sizeof(double));
-    memcpy(PyArray_DATA(yt_output), yt_result, 1 * 10 * sizeof(double));
-    memcpy(PyArray_DATA(P0_output), P0_result, 2 * 2 * sizeof(double));
-    memcpy(PyArray_DATA(dt_output), dt_result, 2 * 1 * sizeof(double));
-    memcpy(PyArray_DATA(ct_output), ct_result, 1 * 1 * sizeof(double));
-    memcpy(PyArray_DATA(Tt_output), Tt_result, 2 * 2 * sizeof(double));
-    memcpy(PyArray_DATA(Zt_output), Zt_result, 1 * 2 * sizeof(double));
-    memcpy(PyArray_DATA(HHt_output), HHt_result, 2 * 2 * sizeof(double));
+    memcpy(PyArray_DATA(a0_output), a0_result, m * 1 * sizeof(double));
+    memcpy(PyArray_DATA(yt_output), yt_result, n * d * sizeof(double));
+    memcpy(PyArray_DATA(P0_output), P0_result, m * m * sizeof(double));
+    memcpy(PyArray_DATA(dt_output), dt_result, m * 1 * sizeof(double));
+    memcpy(PyArray_DATA(ct_output), ct_result, d * 1 * sizeof(double));
+    memcpy(PyArray_DATA(Tt_output), Tt_result, m * m * 1 * sizeof(double));
+    memcpy(PyArray_DATA(Zt_output), Zt_result, d * m * 1 * sizeof(double));
+    memcpy(PyArray_DATA(HHt_output), HHt_result, m * m * 1 * sizeof(double));
+
+    // npy_intp att_dims[2] = {m, n};
+    // npy_intp Ptt_dims[3] = {m, n, n};
+    // npy_intp at_dims[2] = {m, n + 1};
+    // npy_intp Pt_dims[3] = {m, m, n + 1};
+    // npy_intp Ft_inv_dims[2] = {d, n};
+    // npy_intp vt_dims[2] = {d, n};
+    // npy_intp Kt_dims[3] = {m, d, n};
+
+    // PyArrayObject *att = (PyArrayObject *)PyArray_SimpleNew(2, att_dims, NPY_DOUBLE);
+    // PyArrayObject *Ptt = (PyArrayObject *)PyArray_SimpleNew(3, Ptt_dims, NPY_DOUBLE);
+    // PyArrayObject *at = (PyArrayObject *)PyArray_SimpleNew(2, at_dims, NPY_DOUBLE);
+    // PyArrayObject *Pt = (PyArrayObject *)PyArray_SimpleNew(3, Pt_dims, NPY_DOUBLE);
+    // PyArrayObject *Ft_inv = (PyArrayObject *)PyArray_SimpleNew(2, Ft_inv_dims, NPY_DOUBLE);
+    // PyArrayObject *vt = (PyArrayObject *)PyArray_SimpleNew(2, vt_dims, NPY_DOUBLE);
+    // PyArrayObject *Kt = (PyArrayObject *)PyArray_SimpleNew(3, Kt_dims, NPY_DOUBLE);
+
+    // memcpy(PyArray_DATA(att),    att_result,    m * n           * sizeof(double));
+    // memcpy(PyArray_DATA(Ptt),    Ptt_result,    m * m * n       * sizeof(double));
+    // memcpy(PyArray_DATA(at),     at_result,     m * (n + 1)     * sizeof(double));
+    // memcpy(PyArray_DATA(Pt),     Pt_result,     m * m * (n + 1) * sizeof(double));
+    // memcpy(PyArray_DATA(Ft_inv), Ft_inv_result, d * n           * sizeof(double));
+    // memcpy(PyArray_DATA(vt),     vt_result,     d * n           * sizeof(double));
+    // memcpy(PyArray_DATA(Kt),     Kt_result,     m * d * n       * sizeof(double));
 
     // Create a new dictionary:
     PyObject *result_dict = PyDict_New();
@@ -583,7 +713,17 @@ static PyObject *kalman_filter_test(PyObject *self, PyObject *args)
     PyDict_SetItemString(result_dict, "Zt", (PyObject *)Zt_output);
     PyDict_SetItemString(result_dict, "HHt", (PyObject *)HHt_output);
     // Pointer to value:
-    PyDict_SetItemString(result_dict, "log_likelihood", PyLong_FromLong(loglik));
+    PyDict_SetItemString(result_dict, "log_likelihood", PyFloat_FromDouble(*loglik));
+
+    free(a0_result);
+    free(yt_result);
+    free(P0_result);
+    free(dt_result);
+    free(ct_result);
+    free(Tt_result);
+    free(Zt_result);
+    free(HHt_result);
+    free(loglik);
 
     // Clean up the memory for the raw data
     free(kalman_filter_output);

@@ -22,8 +22,9 @@ double **ckalman_filter_test(
     double *HHt, int incHHt,
     double *GGt, int incGGt,
     double *yt,
-    int *loglik)
+    double *loglik)
 {
+    *loglik = 0;
 
     // Coerce dtypes:
     blasint blas_n = (blasint)n;
@@ -75,6 +76,23 @@ double **ckalman_filter_test(
     /* Pt = P0 */
     cblas_dcopy(m_x_m, P0, intone, Pt, intone);
 
+    // vt[SP,t] = vt[SP,t] - Zt[SP,, t * incZt] %*% at[,t]
+    // cblas_dgemm(
+    //     CblasColMajor,
+    //     CblasNoTrans,
+    //     CblasNoTrans,
+    //     1,
+    //     1,
+    //     1,
+    //     dblone,
+    //     Pt,
+    //     1,
+    //     Pt,
+    //     1,
+    //     dblone,
+    //     Pt,
+    //     2);
+
     /**************************************************************/
     /* ---------- ---------- end recursions ---------- ---------- */
     /**************************************************************/
@@ -95,13 +113,12 @@ double **ckalman_filter_test(
     free(NAindices);
     free(Kt);
     free(at);
-    free(Pt);
 
     // Create an array of addresses of output arrays:
     double **results = (double **)malloc(8 * sizeof(double *));
     results[0] = a0;
     results[1] = yt;
-    results[2] = P0;
+    results[2] = Pt;
     results[3] = dt;
     results[4] = ct;
     results[5] = Tt;
