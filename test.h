@@ -1,7 +1,7 @@
 #include <Python.h>
 
 // Logical function:
-double **ckalman_filter_test(
+void ckalman_filter_test(
     // n: the total number of observations
     int n,
     // m: the dimension of the state vector
@@ -18,4 +18,12 @@ double **ckalman_filter_test(
     double *HHt, int incHHt,
     double *GGt, int incGGt,
     double *yt,
-    double *loglik);
+    // Outputs:
+    double *loglik,
+    double *att_output,
+    double *Ptt_output,
+    double *at_output,
+    double *Pt_output,
+    double *Ft_inv_output,
+    double *vt_output,
+    double *Kt_output);

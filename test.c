@@ -5,7 +5,7 @@
 #include <utils.h>
 
 // Logical function:
-double **ckalman_filter_test(
+void ckalman_filter_test(
     // n: the total number of observations
     int n,
     // m: the dimension of the state vector
@@ -22,7 +22,15 @@ double **ckalman_filter_test(
     double *HHt, int incHHt,
     double *GGt, int incGGt,
     double *yt,
-    double *loglik)
+    // Outputs:
+    double *loglik,
+    double *att_output,
+    double *Ptt_output,
+    double *at_output,
+    double *Pt_output,
+    double *Ft_inv_output,
+    double *vt_output,
+    double *Kt_output)
 {
     *loglik = 0;
 
@@ -113,17 +121,4 @@ double **ckalman_filter_test(
     free(NAindices);
     free(Kt);
     free(at);
-
-    // Create an array of addresses of output arrays:
-    double **results = (double **)malloc(8 * sizeof(double *));
-    results[0] = a0;
-    results[1] = yt;
-    results[2] = Pt;
-    results[3] = dt;
-    results[4] = ct;
-    results[5] = Tt;
-    results[6] = Zt;
-    results[7] = HHt;
-
-    return results;
 }
