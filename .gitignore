@@ -1,5 +1,4 @@
-test.py
-utils.sh
+test/**
 libopenblas.dll
 .vscode
 build/*

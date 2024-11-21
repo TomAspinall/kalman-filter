@@ -1,7 +1,7 @@
 #include "numpy/arrayobject.h"
 
 // Debug printing:
-#define DEBUGMODE
+// #define DEBUGMODE
 
 #define M_PI 3.14159265358979323846
 #define IDX(i, j, ncols) ((i) * (ncols) + (j))

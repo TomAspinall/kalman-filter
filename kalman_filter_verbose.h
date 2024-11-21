@@ -1,6 +1,6 @@
 #include <Python.h>
 
-PyObject *ckalman_filter_verbose(
+void ckalman_filter_verbose(
     // n: the total number of observations
     int n,
     // m: the dimension of the state vector
@@ -16,4 +16,13 @@ PyObject *ckalman_filter_verbose(
     double *Zt, int incZt,
     double *HHt, int incHHt,
     double *GGt, int incGGt,
-    double *yt);
+    double *yt,
+    // Outputs:
+    double *loglik,
+    double *att_output,
+    double *Ptt_output,
+    double *at_output,
+    double *Pt_output,
+    double *Ft_inv_output,
+    double *vt_output,
+    double *Kt_output);
