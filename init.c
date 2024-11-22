@@ -1,6 +1,7 @@
 #include <Python.h>
 #include "numpy/arrayobject.h"
 #include "kalman_filter_verbose.h"
+#include "kalman_filter.h"
 #include "utils.h"
 
 /* Wrapped ckalman_filter function */
@@ -646,7 +647,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 
     // Output dimensions:
     npy_intp att_dims[2] = {m, n};
-    npy_intp Ptt_dims[3] = {m, n, n};
+    npy_intp Ptt_dims[3] = {m, m, n};
     npy_intp at_dims[2] = {m, n + 1};
     npy_intp Pt_dims[3] = {m, m, n + 1};
     npy_intp Ft_inv_dims[2] = {d, n};
@@ -741,7 +742,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     return result_dict;
 }
 
-/* Define functions in module */
+//  Module function definitions:
 static PyMethodDef KalmanFilterMethods[] = {
     {"kalman_filter", (PyCFunction)kalman_filter, METH_VARARGS, "Perform the Kalman filter algorithm through Sequential Processing, return log-likelihood"},
     {"kalman_filter_verbose", (PyCFunction)kalman_filter_verbose, METH_VARARGS, "Perform the Kalman filter algorithm through Sequential Processing, return log-likelihood and filtered states"},
@@ -752,8 +753,8 @@ static PyMethodDef KalmanFilterMethods[] = {
 static struct PyModuleDef KalmanFilterStruct = {
     PyModuleDef_HEAD_INIT,
     "kalman_filter",    // name of module
-    "Kalman filtering", // module documentation
-    -1,                 // size of per-interpreter state of the module
+    "Kalman filtering", // Documentation
+    -1,
     KalmanFilterMethods,
     NULL,
     NULL,
@@ -764,10 +765,10 @@ static struct PyModuleDef KalmanFilterStruct = {
 PyObject *PyInit_kalman_filter(void)
 {
 
-    import_array(); // Inititalise NumPy C API
+    import_array();
     if (PyErr_Occurred())
     {
-        printf("Failed to import numpy Python module(s).");
+        printf("Failed to Inititalise NumPy C API.");
         return NULL;
     }
 
