@@ -2,6 +2,7 @@
 #include "numpy/arrayobject.h"
 #include "kalman_filter_verbose.h"
 #include "kalman_filter.h"
+#include "kalman_smoother.h"
 #include "utils.h"
 
 /* Wrapped ckalman_filter function */
@@ -742,9 +743,306 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     return result_dict;
 }
 
+/* Wrapped ckalman_filter function */
+static PyObject *kalman_smoother(PyObject *self, PyObject *args)
+{
+
+    PyObject *kwargs; // We'll accept a dictionary (kwargs)
+    if (!PyArg_ParseTuple(args, "O", &kwargs))
+    {
+        return NULL; // Error parsing tuple (we only expect a single dictionary)
+    }
+
+    if (!PyDict_Check(kwargs))
+    {
+        PyErr_SetString(PyExc_TypeError, "Expected a dictionary");
+        return NULL;
+    }
+
+    // if (input_validation(kwargs, kwargs))
+    // {
+    //     return NULL; // return error;
+    // };
+
+    // Extract the NumPy array from the dictionary
+    PyObject *input_att = PyDict_GetItemString(kwargs, "att");
+    if (input_att == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'att' key.");
+        return NULL;
+    }
+    if (!PyArray_Check(input_att))
+    {
+        PyErr_SetString(PyExc_KeyError, "'a0' is not a valid numpy.ndarray object.");
+        return NULL;
+    }
+    PyObject *input_Ptt = PyDict_GetItemString(kwargs, "Ptt");
+    if (input_Ptt == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'Ptt' key");
+        return NULL;
+    }
+    if (!PyArray_Check(input_Ptt))
+    {
+        PyErr_SetString(PyExc_KeyError, "'Ptt' is not a valid numpy.ndarray object.");
+        return NULL;
+    }
+    PyObject *input_Ft_inv = PyDict_GetItemString(kwargs, "Ft_inv");
+    if (input_Ft_inv == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'Ft_inv' key");
+        return NULL;
+    }
+    if (!PyArray_Check(input_Ft_inv))
+    {
+        PyErr_SetString(PyExc_KeyError, "'Ft_inv' is not a valid numpy.ndarray object.");
+        return NULL;
+    }
+    PyObject *input_Kt = PyDict_GetItemString(kwargs, "Kt");
+    if (input_Kt == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'Ct' key");
+        return NULL;
+    }
+    if (!PyArray_Check(input_Kt))
+    {
+        PyErr_SetString(PyExc_KeyError, "'Kt' is not a valid numpy.ndarray object.");
+        return NULL;
+    }
+    PyObject *input_Tt = PyDict_GetItemString(kwargs, "Tt");
+    if (input_Tt == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'Tt' key");
+        return NULL;
+    }
+    if (!PyArray_Check(input_Tt))
+    {
+        PyErr_SetString(PyExc_KeyError, "'Tt' is not a valid numpy.ndarray object.");
+        return NULL;
+    }
+    PyObject *input_Zt = PyDict_GetItemString(kwargs, "Zt");
+    if (input_Zt == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'Zt' key");
+        return NULL;
+    }
+    if (!PyArray_Check(input_Zt))
+    {
+        PyErr_SetString(PyExc_KeyError, "'zt' is not a valid numpy.ndarray object.");
+        return NULL;
+    }
+    PyObject *input_yt = PyDict_GetItemString(kwargs, "yt");
+    if (input_yt == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'yt' key");
+        return NULL;
+    }
+    if (!PyArray_Check(input_yt))
+    {
+        PyErr_SetString(PyExc_KeyError, "'yt' is not a valid numpy.ndarray object.");
+        return NULL;
+    }
+    PyObject *input_vt = PyDict_GetItemString(kwargs, "vt");
+    if (input_vt == NULL)
+    {
+        PyErr_SetString(PyExc_KeyError, "Missing 'vt' key");
+        return NULL;
+    }
+    if (!PyArray_Check(input_vt))
+    {
+        PyErr_SetString(PyExc_KeyError, "'vt' is not a valid numpy.ndarray object.");
+        return NULL;
+    }
+
+    // Get the NumPy array data and dimensions
+    PyArrayObject *att_arr = (PyArrayObject *)input_att;
+    PyArrayObject *Ptt_arr = (PyArrayObject *)input_Ptt;
+    PyArrayObject *Ft_inv_arr = (PyArrayObject *)input_Ft_inv;
+    PyArrayObject *Kt_arr = (PyArrayObject *)input_Kt;
+    PyArrayObject *Tt_arr = (PyArrayObject *)input_Tt;
+    PyArrayObject *Zt_arr = (PyArrayObject *)input_Zt;
+    PyArrayObject *yt_arr = (PyArrayObject *)input_yt;
+    PyArrayObject *vt_arr = (PyArrayObject *)input_vt;
+
+    // Check that array shapes are consistent:
+    // if (PyArray_NDIM(a0_arr) != 1)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "'a0' is not 1-dimensional");
+    //     return NULL;
+    // }
+    // if (PyArray_NDIM(Ptt_arr) != 2)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "'Ptt' is not 2-dimensional");
+    //     return NULL;
+    // }
+    // if (PyArray_NDIM(yt_arr) > 2)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "'yt' is not 1 or 2-dimensional");
+    //     return NULL;
+    // }
+
+    // Fetch array dimension sizes:
+    npy_intp *att_dims = PyArray_DIMS(att_arr);
+    npy_intp *Ptt_dims = PyArray_DIMS(Ptt_arr);
+    npy_intp *Ft_inv_dims = PyArray_DIMS(Ft_inv_arr);
+    npy_intp *Tt_dims = PyArray_DIMS(Tt_arr);
+    npy_intp *Zt_dims = PyArray_DIMS(Zt_arr);
+    npy_intp *vt_dims = PyArray_DIMS(vt_arr);
+    npy_intp *yt_dims = PyArray_DIMS(yt_arr);
+
+    // Max observations per time point:
+    npy_intp d = yt_dims[0];
+    int int_d = (int)d;
+    // Total observations:
+    npy_intp n = yt_dims[1];
+    int int_n = (int)n;
+    // Number of state variables:
+    npy_intp m = att_dims[0];
+    int int_m = (int)m;
+
+    // Check for consistency in array shapes:
+
+    // Number of state variables (m):
+    // if (Ptt_dims[0] != m || Ptt_dims[1] != m)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "dimensions of square matrix 'Pt' do not match length of state vector 'a0'");
+    //     return NULL;
+    // }
+    // if (Ft_inv_dims[0] != m)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "dimension 1 of matrix 'Ft_inv' does not match length of state vector 'a0'");
+    //     return NULL;
+    // }
+    // if (Zt_dims[1] != m)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "dimension 2 of matrix 'Zt' does not match length of state vector 'a0'");
+    //     return NULL;
+    // }
+    // if (Tt_dims[0] != m || Tt_dims[1] != m)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'Tt' does not match length of state vector 'a0'");
+    //     return NULL;
+    // }
+
+    // Total observations (n):
+    // if (Ft_inv_dims[1] != n && Ft_inv_dims[1] != 1)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'Ft_inv' does not match either 1 or number of observations/columns of 'yt'");
+    //     return NULL;
+    // }
+    // if (vt_dims[1] != n && vt_dims[1] != 1)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not match either 1 or number of observations/columns of 'yt'");
+    //     return NULL;
+    // }
+    // if (PyArray_NDIM(Tt_arr) > 2 && Tt_dims[2] != n && Tt_dims[2] != 1)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Tt' does not match either 1 or number of observations/columns of 'yt'");
+    //     return NULL;
+    // }
+    // if (PyArray_NDIM(Zt_arr) > 2 && Zt_dims[2] != n && Zt_dims[2] != 1)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Zt' does not match either 1 or number of observations/columns of 'yt'");
+    //     return NULL;
+    // }
+
+    // // Max observations per time point (d):
+    // if (vt_dims[0] != d)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'ct' does not equal dimension 0 of 'yt'");
+    //     return NULL;
+    // }
+    // if (Zt_dims[0] != d)
+    // {
+    //     PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'Zt' does not equal dimension 0 of 'yt'");
+    //     return NULL;
+    // }
+
+#ifdef DEBUGMODE
+    // Print algorithm dimensions:
+    printf("Debug: n is: (%Id)\n", n);
+    printf("Debug: m is: (%Id)\n", m);
+    printf("Debug: d is: (%Id)\n", d);
+
+    // Print input dimensions:
+    print_npy_intp_array(att_dims, 1, 2, "att_dims");
+    print_npy_intp_array(Ptt_dims, 1, 3, "Ptt_dims");
+    print_npy_intp_array(Ft_inv_dims, 1, 2, "Ft_inv_dims");
+    print_npy_intp_array(Tt_dims, 1, 3, "Tt_dims");
+    print_npy_intp_array(Zt_dims, 1, 3, "Zt_dims");
+    print_npy_intp_array(vt_dims, 1, 2, "vt_dims");
+    print_npy_intp_array(yt_dims, 1, 2, "yt_dims");
+
+#endif
+
+    // Fetch increment logic:
+    int incTt = Tt_dims[2] == n;
+    int incZt = Zt_dims[2] == n;
+
+#ifdef DEBUGMODE
+    // Print time variant increments:
+    printf("incTt: %d\n", incTt);
+    printf("incZt: %d\n", incZt);
+#endif
+
+    // Fetch input data pointers:
+    double *att = (double *)PyArray_DATA(att_arr);
+    double *Ptt = (double *)PyArray_DATA(Ptt_arr);
+    double *Ft_inv = (double *)PyArray_DATA(Ft_inv_arr);
+    double *Tt = (double *)PyArray_DATA(Tt_arr);
+    double *Zt = (double *)PyArray_DATA(Zt_arr);
+    double *vt = (double *)PyArray_DATA(vt_arr);
+    double *Kt = (double *)PyArray_DATA(Kt_arr);
+    double *yt = (double *)PyArray_DATA(yt_arr);
+
+#ifdef DEBUGMODE
+    // Print arrays:
+    print_array(att, int_m, int_n, "att");
+    print_array(vt, int_m, int_n, "vt");
+    print_array_3D(Ptt, int_m, int_m, int_n, "Ptt");
+    print_array(Ft_inv, int_d, int_n, "Ft_inv");
+    print_array_3D(Tt, int_m, int_m, 1, "Tt");
+    print_array_3D(Kt, int_m, int_m, int_n, "Kt");
+    print_array_3D(Zt, int_d, int_m, 1, "Zt");
+    print_array(yt, int_d, int_n, "yt");
+#endif
+
+    // Call the Kalman Smoother algorithm:
+    ckalman_smoother(
+        /* Dimesions*/
+        int_n, int_m, int_d,
+        // Inputs:
+        Zt, incZt,
+        yt,
+        vt,
+        Tt, incTt,
+        Kt,
+        Ft_inv,
+        att,
+        Ptt);
+
+    // Create NumPy arrays from the results:
+    PyArrayObject *ahatt = (PyArrayObject *)PyArray_SimpleNew(2, att_dims, NPY_DOUBLE);
+    PyArrayObject *Vt = (PyArrayObject *)PyArray_SimpleNew(3, Ptt_dims, NPY_DOUBLE);
+
+    // Copy arrays into numpy objects:
+    memcpy(PyArray_DATA(ahatt), att, int_m * int_n * sizeof(double));
+    memcpy(PyArray_DATA(Vt), Ptt, int_m * int_m * int_n * sizeof(double));
+
+    // Create a new dictionary:
+    PyObject *result_dict = PyDict_New();
+
+    // Add arrays to the dictionary with keys
+    PyDict_SetItemString(result_dict, "ahatt", (PyObject *)ahatt);
+    PyDict_SetItemString(result_dict, "Vt", (PyObject *)Vt);
+
+    return result_dict;
+}
+
 //  Module function definitions:
 static PyMethodDef KalmanFilterMethods[] = {
     {"kalman_filter", (PyCFunction)kalman_filter, METH_VARARGS, "Perform the Kalman filter algorithm through Sequential Processing, return log-likelihood"},
+    {"kalman_smoother", (PyCFunction)kalman_smoother, METH_VARARGS, "Perform the Kalman smoother algorithm through Sequential Processing, return smoothed values"},
     {"kalman_filter_verbose", (PyCFunction)kalman_filter_verbose, METH_VARARGS, "Perform the Kalman filter algorithm through Sequential Processing, return log-likelihood and filtered states"},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
