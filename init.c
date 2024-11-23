@@ -9,9 +9,11 @@
 static PyObject *kalman_filter(PyObject *self, PyObject *args)
 {
 
-    PyObject *kwargs; // We'll accept a dictionary (kwargs)
+    PyObject *kwargs; // dictionary input:
+
     if (!PyArg_ParseTuple(args, "O", &kwargs))
     {
+        PyErr_SetString(PyExc_TypeError, "Expected a dictionary");
         return NULL; // Error parsing tuple (we only expect a single dictionary)
     }
 
@@ -21,13 +23,8 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // if (input_validation(kwargs, kwargs))
-    // {
-    //     return NULL; // return error;
-    // };
-
     // Extract the NumPy array from the dictionary
-    PyObject *input_a0 = PyDict_GetItemString(kwargs, "a0");
+    PyArrayObject *input_a0 = (PyArrayObject *)PyDict_GetItemString(kwargs, "a0");
     if (input_a0 == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'a0' key, or 'a0' is not a numpy.ndarray object.");
@@ -38,7 +35,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'a0' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_P0 = PyDict_GetItemString(kwargs, "P0");
+    PyArrayObject *input_P0 = (PyArrayObject *)PyDict_GetItemString(kwargs, "P0");
     if (input_P0 == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'P0' key");
@@ -49,7 +46,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'P0' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_dt = PyDict_GetItemString(kwargs, "dt");
+    PyArrayObject *input_dt = (PyArrayObject *)PyDict_GetItemString(kwargs, "dt");
     if (input_dt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'dt' key");
@@ -60,7 +57,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'dt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_ct = PyDict_GetItemString(kwargs, "ct");
+    PyArrayObject *input_ct = (PyArrayObject *)PyDict_GetItemString(kwargs, "ct");
     if (input_ct == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'Ct' key");
@@ -71,7 +68,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'ct' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_Tt = PyDict_GetItemString(kwargs, "Tt");
+    PyArrayObject *input_Tt = (PyArrayObject *)PyDict_GetItemString(kwargs, "Tt");
     if (input_Tt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'Tt' key");
@@ -82,7 +79,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'Tt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_Zt = PyDict_GetItemString(kwargs, "Zt");
+    PyArrayObject *input_Zt = (PyArrayObject *)PyDict_GetItemString(kwargs, "Zt");
     if (input_Zt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'Zt' key");
@@ -93,7 +90,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'zt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_HHt = PyDict_GetItemString(kwargs, "HHt");
+    PyArrayObject *input_HHt = (PyArrayObject *)PyDict_GetItemString(kwargs, "HHt");
     if (input_HHt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'HHt' key");
@@ -104,7 +101,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'HHt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_GGt = PyDict_GetItemString(kwargs, "GGt");
+    PyArrayObject *input_GGt = (PyArrayObject *)PyDict_GetItemString(kwargs, "GGt");
     if (input_GGt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'GGt' key");
@@ -115,7 +112,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'GGt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_yt = PyDict_GetItemString(kwargs, "yt");
+    PyArrayObject *input_yt = (PyArrayObject *)PyDict_GetItemString(kwargs, "yt");
     if (input_yt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'yt' key");
@@ -127,44 +124,33 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // Get the NumPy array data and dimensions
-    PyArrayObject *a0_arr = (PyArrayObject *)input_a0;
-    PyArrayObject *P0_arr = (PyArrayObject *)input_P0;
-    PyArrayObject *dt_arr = (PyArrayObject *)input_dt;
-    PyArrayObject *ct_arr = (PyArrayObject *)input_ct;
-    PyArrayObject *Tt_arr = (PyArrayObject *)input_Tt;
-    PyArrayObject *Zt_arr = (PyArrayObject *)input_Zt;
-    PyArrayObject *HHt_arr = (PyArrayObject *)input_HHt;
-    PyArrayObject *GGt_arr = (PyArrayObject *)input_GGt;
-    PyArrayObject *yt_arr = (PyArrayObject *)input_yt;
-
     // Check that array shapes are consistent:
-    if (PyArray_NDIM(a0_arr) != 1)
+    if (PyArray_NDIM(input_a0) != 1)
     {
         PyErr_SetString(PyExc_ValueError, "'a0' is not 1-dimensional");
         return NULL;
     }
-    if (PyArray_NDIM(P0_arr) != 2)
+    if (PyArray_NDIM(input_P0) != 2)
     {
         PyErr_SetString(PyExc_ValueError, "'P0' is not 2-dimensional");
         return NULL;
     }
-    if (PyArray_NDIM(yt_arr) > 2)
+    if (PyArray_NDIM(input_yt) > 2)
     {
         PyErr_SetString(PyExc_ValueError, "'yt' is not 1 or 2-dimensional");
         return NULL;
     }
 
     // Fetch array dimension sizes:
-    npy_intp *a0_dims = PyArray_DIMS(a0_arr);
-    npy_intp *P0_dims = PyArray_DIMS(P0_arr);
-    npy_intp *dt_dims = PyArray_DIMS(dt_arr);
-    npy_intp *ct_dims = PyArray_DIMS(ct_arr);
-    npy_intp *Tt_dims = PyArray_DIMS(Tt_arr);
-    npy_intp *Zt_dims = PyArray_DIMS(Zt_arr);
-    npy_intp *HHt_dims = PyArray_DIMS(HHt_arr);
-    npy_intp *GGt_dims = PyArray_DIMS(GGt_arr);
-    npy_intp *yt_dims = PyArray_DIMS(yt_arr);
+    npy_intp *a0_dims = PyArray_DIMS(input_a0);
+    npy_intp *P0_dims = PyArray_DIMS(input_P0);
+    npy_intp *dt_dims = PyArray_DIMS(input_dt);
+    npy_intp *ct_dims = PyArray_DIMS(input_ct);
+    npy_intp *Tt_dims = PyArray_DIMS(input_Tt);
+    npy_intp *Zt_dims = PyArray_DIMS(input_Zt);
+    npy_intp *HHt_dims = PyArray_DIMS(input_HHt);
+    npy_intp *GGt_dims = PyArray_DIMS(input_GGt);
+    npy_intp *yt_dims = PyArray_DIMS(input_yt);
 
     // Max observations per time point:
     npy_intp d = yt_dims[0];
@@ -216,17 +202,17 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
     }
-    if (PyArray_NDIM(Tt_arr) > 2 && Tt_dims[2] != n && Tt_dims[2] != 1)
+    if (PyArray_NDIM(input_Tt) > 2 && Tt_dims[2] != n && Tt_dims[2] != 1)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Tt' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
     }
-    if (PyArray_NDIM(Zt_arr) > 2 && Zt_dims[2] != n && Zt_dims[2] != 1)
+    if (PyArray_NDIM(input_Zt) > 2 && Zt_dims[2] != n && Zt_dims[2] != 1)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Zt' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
     }
-    if (PyArray_NDIM(HHt_arr) > 2 && HHt_dims[2] != n && HHt_dims[2] != 1)
+    if (PyArray_NDIM(input_HHt) > 2 && HHt_dims[2] != n && HHt_dims[2] != 1)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'HHt' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
@@ -292,15 +278,15 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
 #endif
 
     // Fetch input data pointers:
-    double *a0 = (double *)PyArray_DATA(a0_arr);
-    double *P0 = (double *)PyArray_DATA(P0_arr);
-    double *dt = (double *)PyArray_DATA(dt_arr);
-    double *ct = (double *)PyArray_DATA(ct_arr);
-    double *Tt = (double *)PyArray_DATA(Tt_arr);
-    double *Zt = (double *)PyArray_DATA(Zt_arr);
-    double *HHt = (double *)PyArray_DATA(HHt_arr);
-    double *GGt = (double *)PyArray_DATA(GGt_arr);
-    double *yt = (double *)PyArray_DATA(yt_arr);
+    double *a0 = (double *)PyArray_DATA(input_a0);
+    double *P0 = (double *)PyArray_DATA(input_P0);
+    double *dt = (double *)PyArray_DATA(input_dt);
+    double *ct = (double *)PyArray_DATA(input_ct);
+    double *Tt = (double *)PyArray_DATA(input_Tt);
+    double *Zt = (double *)PyArray_DATA(input_Zt);
+    double *HHt = (double *)PyArray_DATA(input_HHt);
+    double *GGt = (double *)PyArray_DATA(input_GGt);
+    double *yt = (double *)PyArray_DATA(input_yt);
 
 #ifdef DEBUGMODE
     // Print arrays:
@@ -342,9 +328,11 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
 static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 {
 
-    PyObject *kwargs; // We'll accept a dictionary (kwargs)
+    PyObject *kwargs; // dictionary input:
+
     if (!PyArg_ParseTuple(args, "O", &kwargs))
     {
+        PyErr_SetString(PyExc_TypeError, "Expected a dictionary");
         return NULL; // Error parsing tuple (we only expect a single dictionary)
     }
 
@@ -354,13 +342,8 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // if (input_validation(kwargs, kwargs))
-    // {
-    //     return NULL; // return error;
-    // };
-
     // Extract the NumPy array from the dictionary
-    PyObject *input_a0 = PyDict_GetItemString(kwargs, "a0");
+    PyArrayObject *input_a0 = (PyArrayObject *)PyDict_GetItemString(kwargs, "a0");
     if (input_a0 == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'a0' key, or 'a0' is not a numpy.ndarray object.");
@@ -371,7 +354,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'a0' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_P0 = PyDict_GetItemString(kwargs, "P0");
+    PyArrayObject *input_P0 = (PyArrayObject *)PyDict_GetItemString(kwargs, "P0");
     if (input_P0 == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'P0' key");
@@ -382,7 +365,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'P0' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_dt = PyDict_GetItemString(kwargs, "dt");
+    PyArrayObject *input_dt = (PyArrayObject *)PyDict_GetItemString(kwargs, "dt");
     if (input_dt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'dt' key");
@@ -393,7 +376,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'dt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_ct = PyDict_GetItemString(kwargs, "ct");
+    PyArrayObject *input_ct = (PyArrayObject *)PyDict_GetItemString(kwargs, "ct");
     if (input_ct == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'Ct' key");
@@ -404,7 +387,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'ct' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_Tt = PyDict_GetItemString(kwargs, "Tt");
+    PyArrayObject *input_Tt = (PyArrayObject *)PyDict_GetItemString(kwargs, "Tt");
     if (input_Tt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'Tt' key");
@@ -415,7 +398,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'Tt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_Zt = PyDict_GetItemString(kwargs, "Zt");
+    PyArrayObject *input_Zt = (PyArrayObject *)PyDict_GetItemString(kwargs, "Zt");
     if (input_Zt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'Zt' key");
@@ -426,7 +409,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'zt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_HHt = PyDict_GetItemString(kwargs, "HHt");
+    PyArrayObject *input_HHt = (PyArrayObject *)PyDict_GetItemString(kwargs, "HHt");
     if (input_HHt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'HHt' key");
@@ -437,7 +420,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'HHt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_GGt = PyDict_GetItemString(kwargs, "GGt");
+    PyArrayObject *input_GGt = (PyArrayObject *)PyDict_GetItemString(kwargs, "GGt");
     if (input_GGt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'GGt' key");
@@ -448,7 +431,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'GGt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_yt = PyDict_GetItemString(kwargs, "yt");
+    PyArrayObject *input_yt = (PyArrayObject *)PyDict_GetItemString(kwargs, "yt");
     if (input_yt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'yt' key");
@@ -460,44 +443,33 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // Get the NumPy array data and dimensions
-    PyArrayObject *a0_arr = (PyArrayObject *)input_a0;
-    PyArrayObject *P0_arr = (PyArrayObject *)input_P0;
-    PyArrayObject *dt_arr = (PyArrayObject *)input_dt;
-    PyArrayObject *ct_arr = (PyArrayObject *)input_ct;
-    PyArrayObject *Tt_arr = (PyArrayObject *)input_Tt;
-    PyArrayObject *Zt_arr = (PyArrayObject *)input_Zt;
-    PyArrayObject *HHt_arr = (PyArrayObject *)input_HHt;
-    PyArrayObject *GGt_arr = (PyArrayObject *)input_GGt;
-    PyArrayObject *yt_arr = (PyArrayObject *)input_yt;
-
     // Check that array shapes are consistent:
-    if (PyArray_NDIM(a0_arr) != 1)
+    if (PyArray_NDIM(input_a0) != 1)
     {
         PyErr_SetString(PyExc_ValueError, "'a0' is not 1-dimensional");
         return NULL;
     }
-    if (PyArray_NDIM(P0_arr) != 2)
+    if (PyArray_NDIM(input_P0) != 2)
     {
         PyErr_SetString(PyExc_ValueError, "'P0' is not 2-dimensional");
         return NULL;
     }
-    if (PyArray_NDIM(yt_arr) > 2)
+    if (PyArray_NDIM(input_yt) > 2)
     {
         PyErr_SetString(PyExc_ValueError, "'yt' is not 1 or 2-dimensional");
         return NULL;
     }
 
     // Fetch array dimension sizes:
-    npy_intp *a0_dims = PyArray_DIMS(a0_arr);
-    npy_intp *P0_dims = PyArray_DIMS(P0_arr);
-    npy_intp *dt_dims = PyArray_DIMS(dt_arr);
-    npy_intp *ct_dims = PyArray_DIMS(ct_arr);
-    npy_intp *Tt_dims = PyArray_DIMS(Tt_arr);
-    npy_intp *Zt_dims = PyArray_DIMS(Zt_arr);
-    npy_intp *HHt_dims = PyArray_DIMS(HHt_arr);
-    npy_intp *GGt_dims = PyArray_DIMS(GGt_arr);
-    npy_intp *yt_dims = PyArray_DIMS(yt_arr);
+    npy_intp *a0_dims = PyArray_DIMS(input_a0);
+    npy_intp *P0_dims = PyArray_DIMS(input_P0);
+    npy_intp *dt_dims = PyArray_DIMS(input_dt);
+    npy_intp *ct_dims = PyArray_DIMS(input_ct);
+    npy_intp *Tt_dims = PyArray_DIMS(input_Tt);
+    npy_intp *Zt_dims = PyArray_DIMS(input_Zt);
+    npy_intp *HHt_dims = PyArray_DIMS(input_HHt);
+    npy_intp *GGt_dims = PyArray_DIMS(input_GGt);
+    npy_intp *yt_dims = PyArray_DIMS(input_yt);
 
     // Max observations per time point:
     npy_intp d = yt_dims[0];
@@ -549,17 +521,17 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
     }
-    if (PyArray_NDIM(Tt_arr) > 2 && Tt_dims[2] != n && Tt_dims[2] != 1)
+    if (PyArray_NDIM(input_Tt) > 2 && Tt_dims[2] != n && Tt_dims[2] != 1)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Tt' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
     }
-    if (PyArray_NDIM(Zt_arr) > 2 && Zt_dims[2] != n && Zt_dims[2] != 1)
+    if (PyArray_NDIM(input_Zt) > 2 && Zt_dims[2] != n && Zt_dims[2] != 1)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Zt' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
     }
-    if (PyArray_NDIM(HHt_arr) > 2 && HHt_dims[2] != n && HHt_dims[2] != 1)
+    if (PyArray_NDIM(input_HHt) > 2 && HHt_dims[2] != n && HHt_dims[2] != 1)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'HHt' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
@@ -625,15 +597,15 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 #endif
 
     // Fetch input data pointers:
-    double *a0 = (double *)PyArray_DATA(a0_arr);
-    double *P0 = (double *)PyArray_DATA(P0_arr);
-    double *dt = (double *)PyArray_DATA(dt_arr);
-    double *ct = (double *)PyArray_DATA(ct_arr);
-    double *Tt = (double *)PyArray_DATA(Tt_arr);
-    double *Zt = (double *)PyArray_DATA(Zt_arr);
-    double *HHt = (double *)PyArray_DATA(HHt_arr);
-    double *GGt = (double *)PyArray_DATA(GGt_arr);
-    double *yt = (double *)PyArray_DATA(yt_arr);
+    double *a0 = (double *)PyArray_DATA(input_a0);
+    double *P0 = (double *)PyArray_DATA(input_P0);
+    double *dt = (double *)PyArray_DATA(input_dt);
+    double *ct = (double *)PyArray_DATA(input_ct);
+    double *Tt = (double *)PyArray_DATA(input_Tt);
+    double *Zt = (double *)PyArray_DATA(input_Zt);
+    double *HHt = (double *)PyArray_DATA(input_HHt);
+    double *GGt = (double *)PyArray_DATA(input_GGt);
+    double *yt = (double *)PyArray_DATA(input_yt);
 
 #ifdef DEBUGMODE
     // Print arrays:
@@ -752,20 +724,14 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
     {
         return NULL; // Error parsing tuple (we only expect a single dictionary)
     }
-
     if (!PyDict_Check(kwargs))
     {
         PyErr_SetString(PyExc_TypeError, "Expected a dictionary");
         return NULL;
     }
 
-    // if (input_validation(kwargs, kwargs))
-    // {
-    //     return NULL; // return error;
-    // };
-
-    // Extract the NumPy array from the dictionary
-    PyObject *input_att = PyDict_GetItemString(kwargs, "att");
+    // Extract NumPy arrays from input dictionary:
+    PyArrayObject *input_att = (PyArrayObject *)PyDict_GetItemString(kwargs, "att");
     if (input_att == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'att' key.");
@@ -776,7 +742,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'a0' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_Ptt = PyDict_GetItemString(kwargs, "Ptt");
+    PyArrayObject *input_Ptt = (PyArrayObject *)PyDict_GetItemString(kwargs, "Ptt");
     if (input_Ptt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'Ptt' key");
@@ -787,7 +753,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'Ptt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_Ft_inv = PyDict_GetItemString(kwargs, "Ft_inv");
+    PyArrayObject *input_Ft_inv = (PyArrayObject *)PyDict_GetItemString(kwargs, "Ft_inv");
     if (input_Ft_inv == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'Ft_inv' key");
@@ -798,7 +764,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'Ft_inv' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_Kt = PyDict_GetItemString(kwargs, "Kt");
+    PyArrayObject *input_Kt = (PyArrayObject *)PyDict_GetItemString(kwargs, "Kt");
     if (input_Kt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'Ct' key");
@@ -809,7 +775,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'Kt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_Tt = PyDict_GetItemString(kwargs, "Tt");
+    PyArrayObject *input_Tt = (PyArrayObject *)PyDict_GetItemString(kwargs, "Tt");
     if (input_Tt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'Tt' key");
@@ -820,7 +786,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'Tt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_Zt = PyDict_GetItemString(kwargs, "Zt");
+    PyArrayObject *input_Zt = (PyArrayObject *)PyDict_GetItemString(kwargs, "Zt");
     if (input_Zt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'Zt' key");
@@ -831,7 +797,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'zt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_yt = PyDict_GetItemString(kwargs, "yt");
+    PyArrayObject *input_yt = (PyArrayObject *)PyDict_GetItemString(kwargs, "yt");
     if (input_yt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'yt' key");
@@ -842,7 +808,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_KeyError, "'yt' is not a valid numpy.ndarray object.");
         return NULL;
     }
-    PyObject *input_vt = PyDict_GetItemString(kwargs, "vt");
+    PyArrayObject *input_vt = (PyArrayObject *)PyDict_GetItemString(kwargs, "vt");
     if (input_vt == NULL)
     {
         PyErr_SetString(PyExc_KeyError, "Missing 'vt' key");
@@ -854,41 +820,31 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // Get the NumPy array data and dimensions
-    PyArrayObject *att_arr = (PyArrayObject *)input_att;
-    PyArrayObject *Ptt_arr = (PyArrayObject *)input_Ptt;
-    PyArrayObject *Ft_inv_arr = (PyArrayObject *)input_Ft_inv;
-    PyArrayObject *Kt_arr = (PyArrayObject *)input_Kt;
-    PyArrayObject *Tt_arr = (PyArrayObject *)input_Tt;
-    PyArrayObject *Zt_arr = (PyArrayObject *)input_Zt;
-    PyArrayObject *yt_arr = (PyArrayObject *)input_yt;
-    PyArrayObject *vt_arr = (PyArrayObject *)input_vt;
-
     // Check that array shapes are consistent:
-    // if (PyArray_NDIM(a0_arr) != 1)
+    // if (PyArray_NDIM(input_a0) != 1)
     // {
     //     PyErr_SetString(PyExc_ValueError, "'a0' is not 1-dimensional");
     //     return NULL;
     // }
-    // if (PyArray_NDIM(Ptt_arr) != 2)
+    // if (PyArray_NDIM(input_Ptt) != 2)
     // {
     //     PyErr_SetString(PyExc_ValueError, "'Ptt' is not 2-dimensional");
     //     return NULL;
     // }
-    // if (PyArray_NDIM(yt_arr) > 2)
+    // if (PyArray_NDIM(input_yt) > 2)
     // {
     //     PyErr_SetString(PyExc_ValueError, "'yt' is not 1 or 2-dimensional");
     //     return NULL;
     // }
 
     // Fetch array dimension sizes:
-    npy_intp *att_dims = PyArray_DIMS(att_arr);
-    npy_intp *Ptt_dims = PyArray_DIMS(Ptt_arr);
-    npy_intp *Ft_inv_dims = PyArray_DIMS(Ft_inv_arr);
-    npy_intp *Tt_dims = PyArray_DIMS(Tt_arr);
-    npy_intp *Zt_dims = PyArray_DIMS(Zt_arr);
-    npy_intp *vt_dims = PyArray_DIMS(vt_arr);
-    npy_intp *yt_dims = PyArray_DIMS(yt_arr);
+    npy_intp *att_dims = PyArray_DIMS(input_att);
+    npy_intp *Ptt_dims = PyArray_DIMS(input_Ptt);
+    npy_intp *Ft_inv_dims = PyArray_DIMS(input_Ft_inv);
+    npy_intp *Tt_dims = PyArray_DIMS(input_Tt);
+    npy_intp *Zt_dims = PyArray_DIMS(input_Zt);
+    npy_intp *vt_dims = PyArray_DIMS(input_vt);
+    npy_intp *yt_dims = PyArray_DIMS(input_yt);
 
     // Max observations per time point:
     npy_intp d = yt_dims[0];
@@ -935,12 +891,12 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
     //     PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not match either 1 or number of observations/columns of 'yt'");
     //     return NULL;
     // }
-    // if (PyArray_NDIM(Tt_arr) > 2 && Tt_dims[2] != n && Tt_dims[2] != 1)
+    // if (PyArray_NDIM(input_Tt) > 2 && Tt_dims[2] != n && Tt_dims[2] != 1)
     // {
     //     PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Tt' does not match either 1 or number of observations/columns of 'yt'");
     //     return NULL;
     // }
-    // if (PyArray_NDIM(Zt_arr) > 2 && Zt_dims[2] != n && Zt_dims[2] != 1)
+    // if (PyArray_NDIM(input_Zt) > 2 && Zt_dims[2] != n && Zt_dims[2] != 1)
     // {
     //     PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Zt' does not match either 1 or number of observations/columns of 'yt'");
     //     return NULL;
@@ -986,14 +942,14 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
 #endif
 
     // Fetch input data pointers:
-    double *att = (double *)PyArray_DATA(att_arr);
-    double *Ptt = (double *)PyArray_DATA(Ptt_arr);
-    double *Ft_inv = (double *)PyArray_DATA(Ft_inv_arr);
-    double *Tt = (double *)PyArray_DATA(Tt_arr);
-    double *Zt = (double *)PyArray_DATA(Zt_arr);
-    double *vt = (double *)PyArray_DATA(vt_arr);
-    double *Kt = (double *)PyArray_DATA(Kt_arr);
-    double *yt = (double *)PyArray_DATA(yt_arr);
+    double *att = (double *)PyArray_DATA(input_att);
+    double *Ptt = (double *)PyArray_DATA(input_Ptt);
+    double *Ft_inv = (double *)PyArray_DATA(input_Ft_inv);
+    double *Tt = (double *)PyArray_DATA(input_Tt);
+    double *Zt = (double *)PyArray_DATA(input_Zt);
+    double *vt = (double *)PyArray_DATA(input_vt);
+    double *Kt = (double *)PyArray_DATA(input_Kt);
+    double *yt = (double *)PyArray_DATA(input_yt);
 
 #ifdef DEBUGMODE
     // Print arrays:
