@@ -459,7 +459,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 #endif
 
     // Output dimensions:
-    npy_intp att_dims[2] = {m, n};
+    npy_intp xtt_dims[2] = {m, n};
     npy_intp Ptt_dims[3] = {m, m, n};
     npy_intp at_dims[2] = {m, n + 1};
     npy_intp Pt_dims[3] = {m, m, n + 1};
@@ -468,7 +468,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     npy_intp Kt_dims[3] = {m, d, n};
 
     // Total output sizes:
-    int att_size = int_m * int_n * sizeof(double);
+    int xtt_size = int_m * int_n * sizeof(double);
     int Ptt_size = int_m * int_m * int_n * sizeof(double);
     int at_size = int_m * (int_n + 1) * sizeof(double);
     int Pt_size = int_m * int_m * (int_n + 1) * sizeof(double);
@@ -478,7 +478,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 
     // Generate output data pointers:
     double *loglik = (double *)malloc(sizeof(double));
-    double *att_output = (double *)malloc(att_size);
+    double *xtt_output = (double *)malloc(xtt_size);
     double *Ptt_output = (double *)malloc(Ptt_size);
     double *at_output = (double *)malloc(at_size);
     double *Pt_output = (double *)malloc(Pt_size);
@@ -503,7 +503,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         yt,
         // Outputs:
         loglik,
-        att_output,
+        xtt_output,
         Ptt_output,
         at_output,
         Pt_output,
@@ -512,7 +512,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         Kt_output);
 
     // Create NumPy arrays from the results:
-    PyArrayObject *att = (PyArrayObject *)PyArray_SimpleNew(2, att_dims, NPY_DOUBLE);
+    PyArrayObject *xtt = (PyArrayObject *)PyArray_SimpleNew(2, xtt_dims, NPY_DOUBLE);
     PyArrayObject *Ptt = (PyArrayObject *)PyArray_SimpleNew(3, Ptt_dims, NPY_DOUBLE);
     PyArrayObject *at = (PyArrayObject *)PyArray_SimpleNew(2, at_dims, NPY_DOUBLE);
     PyArrayObject *Pt = (PyArrayObject *)PyArray_SimpleNew(3, Pt_dims, NPY_DOUBLE);
@@ -521,7 +521,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     PyArrayObject *Kt = (PyArrayObject *)PyArray_SimpleNew(3, Kt_dims, NPY_DOUBLE);
 
     // Copy arrays into numpy objects:
-    memcpy(PyArray_DATA(att), att_output, att_size);
+    memcpy(PyArray_DATA(xtt), xtt_output, xtt_size);
     memcpy(PyArray_DATA(Ptt), Ptt_output, Ptt_size);
     memcpy(PyArray_DATA(at), at_output, at_size);
     memcpy(PyArray_DATA(Pt), Pt_output, Pt_size);
@@ -534,7 +534,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 
     // Add arrays to the dictionary with keys
     PyDict_SetItemString(result_dict, "log_likelihood", PyFloat_FromDouble(*loglik));
-    PyDict_SetItemString(result_dict, "att", (PyObject *)att);
+    PyDict_SetItemString(result_dict, "xtt", (PyObject *)xtt);
     PyDict_SetItemString(result_dict, "Ptt", (PyObject *)Ptt);
     PyDict_SetItemString(result_dict, "at", (PyObject *)at);
     PyDict_SetItemString(result_dict, "Pt", (PyObject *)Pt);
@@ -543,7 +543,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     PyDict_SetItemString(result_dict, "Kt", (PyObject *)Kt);
 
     // Free dynamic memory:
-    free(att_output);
+    free(xtt_output);
     free(Ptt_output);
     free(at_output);
     free(Pt_output);
@@ -573,7 +573,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
 
     // Input dictionary keys:
     const char *keys[] = {
-        "yt", "att", "Ptt", "Ft_inv", "Kt", "Tt", "Zt", "vt"};
+        "yt", "xtt", "Ptt", "Ft_inv", "Kt", "Tt", "Zt", "vt"};
     // len(keys):
     const int total_keys = 8;
     // ndarrays:
@@ -694,7 +694,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
 
     // Print input dimensions:
     print_npy_intp_array(array_dims[0], 1, 2, "yt_dims");
-    print_npy_intp_array(array_dims[1], 1, 2, "att_dims");
+    print_npy_intp_array(array_dims[1], 1, 2, "xtt_dims");
     print_npy_intp_array(array_dims[2], 1, 3, "Ptt_dims");
     print_npy_intp_array(array_dims[3], 1, 2, "Ft_inv_dims");
     print_npy_intp_array(array_dims[5], 1, 3, "Tt_dims");
@@ -715,7 +715,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
 
     // Fetch double input data pointers:
     double *yt = (double *)PyArray_DATA(ndarrays[0]);
-    double *att = (double *)PyArray_DATA(ndarrays[1]);
+    double *xtt = (double *)PyArray_DATA(ndarrays[1]);
     double *Ptt = (double *)PyArray_DATA(ndarrays[2]);
     double *Ft_inv = (double *)PyArray_DATA(ndarrays[3]);
     double *Kt = (double *)PyArray_DATA(ndarrays[4]);
@@ -725,7 +725,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
 
 #ifdef DEBUGMODE
     // Print arrays:
-    print_array(att, int_m, int_n, "att");
+    print_array(xtt, int_m, int_n, "xtt");
     print_array(vt, int_m, int_n, "vt");
     print_array_3D(Ptt, int_m, int_m, int_n, "Ptt");
     print_array(Ft_inv, int_d, int_n, "Ft_inv");
@@ -746,22 +746,22 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
         Tt, incTt,
         Kt,
         Ft_inv,
-        att,
+        xtt,
         Ptt);
 
     // Create NumPy arrays from the results:
-    PyArrayObject *ahatt = (PyArrayObject *)PyArray_SimpleNew(2, array_dims[1], NPY_DOUBLE);
+    PyArrayObject *xhatt = (PyArrayObject *)PyArray_SimpleNew(2, array_dims[1], NPY_DOUBLE);
     PyArrayObject *Vt = (PyArrayObject *)PyArray_SimpleNew(3, array_dims[2], NPY_DOUBLE);
 
     // Copy arrays into numpy objects:
-    memcpy(PyArray_DATA(ahatt), att, int_m * int_n * sizeof(double));
+    memcpy(PyArray_DATA(xhatt), xtt, int_m * int_n * sizeof(double));
     memcpy(PyArray_DATA(Vt), Ptt, int_m * int_m * int_n * sizeof(double));
 
     // Create a new dictionary:
     PyObject *result_dict = PyDict_New();
 
     // Add arrays to the dictionary with keys
-    PyDict_SetItemString(result_dict, "ahatt", (PyObject *)ahatt);
+    PyDict_SetItemString(result_dict, "xhatt", (PyObject *)xhatt);
     PyDict_SetItemString(result_dict, "Vt", (PyObject *)Vt);
 
     return result_dict;
