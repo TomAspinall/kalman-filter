@@ -23,7 +23,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
 
     // Input dictionary keys:
     const char *keys[] = {
-        "a0", "P0", "yt", "dt", "ct", "Tt", "Zt", "HHt", "GGt"};
+        "x", "P", "yt", "dt", "ct", "Tt", "Zt", "HHt", "GGt"};
     const int total_keys = 9;
     // ndarrays:
     PyArrayObject *ndarrays[9];
@@ -57,12 +57,12 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     // Check that array shapes are consistent:
     if (array_ndims[0] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "'a0' is not 1-dimensional");
+        PyErr_SetString(PyExc_ValueError, "'x' is not 1-dimensional");
         return NULL;
     }
     if (array_ndims[1] != 2)
     {
-        PyErr_SetString(PyExc_ValueError, "'P0' is not 2-dimensional");
+        PyErr_SetString(PyExc_ValueError, "'P' is not 2-dimensional");
         return NULL;
     }
     if (array_ndims[2] > 2)
@@ -71,7 +71,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // Number of state variables - a0 dim[0]:
+    // Number of state variables - x dim[0]:
     npy_intp m = array_dims[0][0];
     int int_m = (int)m;
     // Max observations per time point - yt dim[0]:
@@ -86,27 +86,27 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     // Number of state variables (m):
     if (array_dims[1][0] != m || array_dims[1][1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimensions of square matrix 'Pt' do not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimensions of square matrix 'Pt' do not match length of state vector 'x'");
         return NULL;
     }
     if (array_dims[3][0] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 1 of matrix 'dt' does not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimension 1 of matrix 'dt' does not match length of state vector 'x'");
         return NULL;
     }
     if (array_dims[6][1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 2 of matrix 'Zt' does not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of matrix 'Zt' does not match length of state vector 'x'");
         return NULL;
     }
     if (array_dims[5][0] != m || array_dims[5][1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'Tt' does not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'Tt' does not match length of state vector 'x'");
         return NULL;
     }
     if (array_dims[7][0] != m || array_dims[7][1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'HHt' does not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'HHt' does not match length of state vector 'x'");
         return NULL;
     }
 
@@ -166,8 +166,8 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     printf("Debug: d is: (%Id)\n", d);
 
     // Print input dimensions:
-    print_npy_intp_array(a0_dims, 1, 1, "a0_dims");
-    print_npy_intp_array(P0_dims, 1, 2, "P0_dims");
+    print_npy_intp_array(x_dims, 1, 1, "x_dims");
+    print_npy_intp_array(P_dims, 1, 2, "P_dims");
     print_npy_intp_array(dt_dims, 1, 2, "dt_dims");
     print_npy_intp_array(ct_dims, 1, 2, "ct_dims");
     print_npy_intp_array(Tt_dims, 1, 3, "Tt_dims");
@@ -198,8 +198,8 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
 #endif
 
     // Fetch input data pointers:
-    double *a0 = (double *)PyArray_DATA(ndarrays[0]);
-    double *P0 = (double *)PyArray_DATA(ndarrays[1]);
+    double *x = (double *)PyArray_DATA(ndarrays[0]);
+    double *P = (double *)PyArray_DATA(ndarrays[1]);
     double *yt = (double *)PyArray_DATA(ndarrays[2]);
     double *dt = (double *)PyArray_DATA(ndarrays[3]);
     double *ct = (double *)PyArray_DATA(ndarrays[4]);
@@ -210,8 +210,8 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
 
 #ifdef DEBUGMODE
     // Print arrays:
-    print_array(a0, 1, int_m, "a0");
-    print_array(P0, int_m, int_m, "P0");
+    print_array(x, 1, int_m, "x");
+    print_array(P, int_m, int_m, "P");
     print_array(dt, int_m, 1, "dt");
     print_array(ct, int_d, 1, "ct");
     print_array_3D(Tt, int_m, int_m, 1, "Tt");
@@ -228,8 +228,8 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         int_n,
         int_m,
         int_d,
-        a0,
-        P0,
+        x,
+        P,
         dt, incdt,
         ct, incct,
         Tt, incTt,
@@ -262,7 +262,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 
     // Input dictionary keys:
     const char *keys[] = {
-        "a0", "P0", "yt", "dt", "ct", "Tt", "Zt", "HHt", "GGt"};
+        "x", "P", "yt", "dt", "ct", "Tt", "Zt", "HHt", "GGt"};
     const int total_keys = 9;
     // ndarrays:
     PyArrayObject *ndarrays[9];
@@ -296,12 +296,12 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     // Check that array shapes are consistent:
     if (array_ndims[0] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "'a0' is not 1-dimensional");
+        PyErr_SetString(PyExc_ValueError, "'x' is not 1-dimensional");
         return NULL;
     }
     if (array_ndims[1] != 2)
     {
-        PyErr_SetString(PyExc_ValueError, "'P0' is not 2-dimensional");
+        PyErr_SetString(PyExc_ValueError, "'P' is not 2-dimensional");
         return NULL;
     }
     if (array_ndims[2] > 2)
@@ -310,7 +310,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // Number of state variables - a0 dim[0]:
+    // Number of state variables - x dim[0]:
     npy_intp m = array_dims[0][0];
     int int_m = (int)m;
     // Max observations per time point - yt dim[0]:
@@ -325,27 +325,27 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     // Number of state variables (m):
     if (array_dims[1][0] != m || array_dims[1][1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimensions of square matrix 'Pt' do not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimensions of square matrix 'Pt' do not match length of state vector 'x'");
         return NULL;
     }
     if (array_dims[3][0] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 1 of matrix 'dt' does not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimension 1 of matrix 'dt' does not match length of state vector 'x'");
         return NULL;
     }
     if (array_dims[6][1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 2 of matrix 'Zt' does not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of matrix 'Zt' does not match length of state vector 'x'");
         return NULL;
     }
     if (array_dims[5][0] != m || array_dims[5][1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'Tt' does not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'Tt' does not match length of state vector 'x'");
         return NULL;
     }
     if (array_dims[7][0] != m || array_dims[7][1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'HHt' does not match length of state vector 'a0'");
+        PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'HHt' does not match length of state vector 'x'");
         return NULL;
     }
 
@@ -405,8 +405,8 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     printf("Debug: d is: (%Id)\n", d);
 
     // Print input dimensions:
-    print_npy_intp_array(a0_dims, 1, 1, "a0_dims");
-    print_npy_intp_array(P0_dims, 1, 2, "P0_dims");
+    print_npy_intp_array(x_dims, 1, 1, "x_dims");
+    print_npy_intp_array(P_dims, 1, 2, "P_dims");
     print_npy_intp_array(dt_dims, 1, 2, "dt_dims");
     print_npy_intp_array(ct_dims, 1, 2, "ct_dims");
     print_npy_intp_array(Tt_dims, 1, 3, "Tt_dims");
@@ -437,8 +437,8 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 #endif
 
     // Fetch input data pointers:
-    double *a0 = (double *)PyArray_DATA(ndarrays[0]);
-    double *P0 = (double *)PyArray_DATA(ndarrays[1]);
+    double *x = (double *)PyArray_DATA(ndarrays[0]);
+    double *P = (double *)PyArray_DATA(ndarrays[1]);
     double *yt = (double *)PyArray_DATA(ndarrays[2]);
     double *dt = (double *)PyArray_DATA(ndarrays[3]);
     double *ct = (double *)PyArray_DATA(ndarrays[4]);
@@ -449,8 +449,8 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 
 #ifdef DEBUGMODE
     // Print arrays:
-    print_array(a0, 1, int_m, "a0");
-    print_array(P0, int_m, int_m, "P0");
+    print_array(x, 1, int_m, "x");
+    print_array(P, int_m, int_m, "P");
     print_array(dt, int_m, 1, "dt");
     print_array(ct, int_d, 1, "ct");
     print_array_3D(Tt, int_m, int_m, 1, "Tt");
@@ -492,8 +492,8 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         int_n,
         int_m,
         int_d,
-        a0,
-        P0,
+        x,
+        P,
         dt, incdt,
         ct, incct,
         Tt, incTt,
@@ -602,9 +602,9 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
     }
 
     // Check that array shapes are consistent:
-    // if (PyArray_NDIM(input_a0) != 1)
+    // if (PyArray_NDIM(input_x) != 1)
     // {
-    //     PyErr_SetString(PyExc_ValueError, "'a0' is not 1-dimensional");
+    //     PyErr_SetString(PyExc_ValueError, "'x' is not 1-dimensional");
     //     return NULL;
     // }
     // if (PyArray_NDIM(input_Ptt) != 2)
@@ -633,22 +633,22 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
     // Number of state variables (m):
     // if (Ptt_dims[0] != m || Ptt_dims[1] != m)
     // {
-    //     PyErr_SetString(PyExc_ValueError, "dimensions of square matrix 'Pt' do not match length of state vector 'a0'");
+    //     PyErr_SetString(PyExc_ValueError, "dimensions of square matrix 'Pt' do not match length of state vector 'x'");
     //     return NULL;
     // }
     // if (Ft_inv_dims[0] != m)
     // {
-    //     PyErr_SetString(PyExc_ValueError, "dimension 1 of matrix 'Ft_inv' does not match length of state vector 'a0'");
+    //     PyErr_SetString(PyExc_ValueError, "dimension 1 of matrix 'Ft_inv' does not match length of state vector 'x'");
     //     return NULL;
     // }
     // if (Zt_dims[1] != m)
     // {
-    //     PyErr_SetString(PyExc_ValueError, "dimension 2 of matrix 'Zt' does not match length of state vector 'a0'");
+    //     PyErr_SetString(PyExc_ValueError, "dimension 2 of matrix 'Zt' does not match length of state vector 'x'");
     //     return NULL;
     // }
     // if (Tt_dims[0] != m || Tt_dims[1] != m)
     // {
-    //     PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'Tt' does not match length of state vector 'a0'");
+    //     PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'Tt' does not match length of state vector 'x'");
     //     return NULL;
     // }
 

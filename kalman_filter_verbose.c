@@ -11,14 +11,17 @@ void ckalman_filter_verbose(
     int m,
     // d: the dimension of observations
     int d,
-    // Arrays / matrices, are we incrementing on these arrays / matrices?
-    double *a0,
-    double *P0,
+    // Filter State Estimate:
+    double *x,
+    // Covariance Matrix:
+    double *P,
     double *dt, int incdt,
     double *ct, int incct,
     double *Tt, int incTt,
     double *Zt, int incZt,
+    // Measurement Uncertainty / Noise:
     double *HHt, int incHHt,
+    // Measurement Function:
     double *GGt, int incGGt,
     double *yt,
     // Outputs:
@@ -75,11 +78,11 @@ void ckalman_filter_verbose(
     double *tmpmxSP = (double *)calloc(m, sizeof(double));
     double *tmpmxm = (double *)calloc(m_x_m, sizeof(double));
 
-    /* at = a0 */
-    cblas_dcopy(blas_m, a0, intone, at, intone);
+    /* at = x */
+    cblas_dcopy(blas_m, x, intone, at, intone);
 
-    /* Pt = P0 */
-    cblas_dcopy(m_x_m, P0, intone, Pt, intone);
+    /* Pt = P */
+    cblas_dcopy(m_x_m, P, intone, Pt, intone);
 
     // initialise att:
     cblas_dcopy(blas_m, at, intone, &at_output[m * t + m], intone);

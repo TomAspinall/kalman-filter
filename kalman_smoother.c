@@ -25,7 +25,7 @@ void ckalman_smoother(
     double *Tt, int incTt,
     double *Kt,
     double *Ft_inv,
-    double *att,
+    double *xtt,
     double *Ptt)
 {
 
@@ -85,7 +85,7 @@ void ckalman_smoother(
                     blas_m, intone, blas_m,
                     dblone, &Ptt[m_x_m * t], blas_m,
                     r, blas_m,
-                    dblone, &att[m * t], blas_m);
+                    dblone, &xtt[m * t], blas_m);
 
         /* V_t = P_t - P_t %*% N_t-1 %*% P_t */
         // Step 1: tmpmxm = P_t %*% N_t-1:
