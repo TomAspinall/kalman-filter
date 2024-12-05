@@ -2,7 +2,7 @@
 
 A Fast and efficient implementation of the linear Kalman Filter and Smoother algorithms callable within python. When the efficiency of filtering, smoothing, and numeric parameter estimation of models relying on a linear Kalman filter process are crucial to applying your models.
 
-For those wishing to learn more about filtering and the linear Kalman filter, I highly recommend the online available textbook: (Kalman-and-Bayesian-Filters-in-Python)[https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python]
+For those wishing to learn more about filtering and the linear Kalman filter, I highly recommend the online available textbook:  [Kalman-and-Bayesian-Filters-in-Python](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python)
 
 This module is designed for those whom wish to:
 - understand how a Kalman filter / smoother works, and,
@@ -15,7 +15,7 @@ Sequential processing is a method of linear Kalman filtering that, rather than o
 
 This is a process that is:
 - More computationally efficient than the "traditional" linear Kalman filter algorithm
-- Scales linearly, as opposed to quadratically/exponentially, with respect to the dimensionality of yt i.e., the number of observations at each observation (Kindly see page 104 of my Ph.D. thesis)[https://pure.bond.edu.au/ws/portalfiles/portal/167739220/Thomas_Aspinall_Thesis.pdf]
+- Scales linearly, as opposed to quadratically/exponentially, with respect to the dimensionality of yt i.e., the number of observations at each observation [Kindly see page 104 of my Ph.D. thesis](https://pure.bond.edu.au/ws/portalfiles/portal/167739220/Thomas_Aspinall_Thesis.pdf)
 
 If you have a singular observation at each discrete time-point, you won't even notice the difference, but will benefit from the gains of sequential processing.
 
@@ -38,5 +38,5 @@ Utilising numerical optimisation to estimate parameters can be a computationally
 
 # Resources:
 
-- Explore how Kalman filters work (using this interactive module)[https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python]
-- (Shamelesslty plugged) explore the disctinction between traditional Kalman filtering and the sequential processing algorithm within my PhD (between page 97 and 108)[https://pure.bond.edu.au/ws/portalfiles/portal/167739220/Thomas_Aspinall_Thesis.pdf]
+- Explore how Kalman filters work [using this interactive module](https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python)
+- Explore the disctinction between traditional Kalman filtering and the sequential processing algorithm, and the benefits of the implemented algorithm, within my PhD [between page 97 and 108](https://pure.bond.edu.au/ws/portalfiles/portal/167739220/Thomas_Aspinall_Thesis.pdf)
