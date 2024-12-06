@@ -10,7 +10,7 @@ include_dirs = [numpy_include_dir, cblas_include_dir, '.']
 library_dirs = [cblas_library_dir]
 
 c_sources = ["kalman_filter_verbose.c", "utils.c",
-             "init.c", "kalman_filter.c", "kalman_smoother.c"]
+             "init.c", "kalman_filter.c", "kalman_smoother.c", "filter_parse_input.c"]
 
 module = Extension("kalman_filter", sources=c_sources,
                    libraries=["libopenblas"],

@@ -4,6 +4,7 @@
 #include "kalman_filter.h"
 #include "kalman_smoother.h"
 #include "utils.h"
+#include "filter_parse_input.h"
 
 /* Wrapped ckalman_filter function */
 static PyObject *kalman_filter(PyObject *self, PyObject *args)
@@ -21,12 +22,32 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         return NULL;
     }
 
+    // // input ndarray values:
+    PyArrayObject *ndarrays[9];
+    // // output double values:
+    double *parsed_inputs[9];
+    // // n, m, d, incdt, incct, incTt, incZt, incHHt, incGGt
+    int *parsed_input_dim[9];
+
+    Py_INCREF(kwargs); // Increment before passing
+    Py_DECREF(kwargs); // Decrement after use
+
+    // Parse inputs:
+    // cfilter_parse_input(kwargs, ndarrays, array_ndims);
+    int error = cfilter_parse_input(kwargs, ndarrays, parsed_inputs, parsed_input_dim);
+    // int error = cfilter_parse_input(kwargs);
+    // Did the parse_input function return an error?
+    if (error == 1)
+    {
+        return NULL;
+    }
+
+    printf("%Id is the value of parsed_input_dim[0] \n", parsed_input_dim[1]);
+
     // Input dictionary keys:
     const char *keys[] = {
         "x", "P", "yt", "dt", "ct", "GGt", "Tt", "Zt", "HHt"};
     const int total_keys = 9;
-    // ndarrays:
-    PyArrayObject *ndarrays[9];
     // ndarray dims:
     npy_intp *array_dims[9];
     // ndarray number of dimensions:
