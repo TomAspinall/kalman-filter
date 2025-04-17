@@ -1,118 +1,78 @@
-from typing import Union
+from dataclasses import asdict, dataclass
+from typing import Iterable
 
 import numpy as np
 
-# Compiled C code library:
-import kalman_filter
 
-
-# Attempting to Smooth before Kalman filter executed:
-class KalmanFilterNotExecuted(Exception):
-    pass
-
-
-class OutOfRangeYt(Exception):
-    pass
-
-
+@dataclass
 class KalmanFilter():
+    """Kalman Filter compatible object"""
+    yt: float | Iterable | np.ndarray
+    x: float | Iterable | np.ndarray
+    P: float | Iterable | np.ndarray
+    dt: float | Iterable | np.ndarray
+    ct: float | Iterable | np.ndarray
+    Tt: float | Iterable | np.ndarray
+    Zt: float | Iterable | np.ndarray
+    HHt: float | Iterable | np.ndarray
+    GGt: float | Iterable | np.ndarray
 
-    def __init__(self,
-                 yt: Union[float, list, np.ndarray],
-                 x: Union[float, list, np.ndarray],
-                 P: Union[float, list, np.ndarray],
-                 dt: Union[float, list, np.ndarray],
-                 ct: Union[float, list, np.ndarray],
-                 Tt: Union[float, list, np.ndarray],
-                 Zt: Union[float, list, np.ndarray],
-                 HHt: Union[float, list, np.ndarray],
-                 GGt: Union[float, list, np.ndarray],
-                 ) -> None:
+    def __post_init__(self):
+        # Explicit n, m, d dimensional compatibility is enforced within the compiled C algorithm implementations.
 
-        # Instantiate variables -> to make them available to IDE's
-        self.yt = yt
-        self.x = x
-        self.P = P
-        self.dt = dt
-        self.ct = ct
-        self.Tt = Tt
-        self.Zt = Zt
-        self.HHt = HHt
-        self.GGt = GGt
-
-        # Input coercion, for scalar, iterables, etc.
-        input_names = ["x", "P", "dt", "ct", "Tt", "Zt", "HHt", "GGt"]
-        ndims = [1, 2, 2, 2, 3, 3, 3, 2]
-        inputs = [x, P, dt, ct, Tt, Zt, HHt, GGt]
-        for ndim, input, input_name in zip(ndims, inputs, input_names):
-            # Scalar input support (making implicit assumption that d = 1):
-            if np.isscalar(input):
-                input_ndim = [1] * ndim
-                input_ndarr = np.ndarray(input_ndim)
-                input_ndarr[:] = input
-            else:
-                # sequence-like support:
-                input_ndarr = np.array(input)
-            setattr(self, input_name, input_ndarr)
-        # yt handling:
-        # Scalar input support (making implicit assumption that d = 1):
-        if np.isscalar(yt):
-            input_ndim = (1, len(yt))
-            input_ndarr = np.ndarray(input_ndim)
-            input_ndarr[:] = yt
-            self.yt = input_ndarr
-        else:
+        # Coerce inputs, checking for compatible dtypes:
+        # attr, expected ndims:
+        expected_ndims = {
+            "x": 1,
+            "P": 2,
+            "dt": 2,
+            "ct": 2,
+            "Tt": 3,
+            "Zt": 3,
+            "HHt": 3,
+            "GGt": 2
+        }
+        for attr, ndim in expected_ndims.items():
+            input = getattr(self, attr)
             # Scalar input support:
-            yt_attr = np.array(yt)
+            if np.isscalar(input):
+                input_ndarr = np.ndarray([1] * ndim)
+                input_ndarr[:] = input
+            elif type(input) != np.ndarray:
+                # Iterable support:
+                input_ndarr = np.array(input)
+            else:
+                # No coercion necessary:
+                continue
+            setattr(self, attr, input_ndarr)
+
+        # yt coercion:
+        # Scalar input support (making implicit assumption that d = 1):
+        if np.isscalar(self.yt):
+            yt_attr = np.ndarray((1, len(self.yt)))
+            yt_attr[:] = self.yt
+        elif type(self.yt) != np.ndarray:
+            # Iterable input support:
+            yt_attr = np.array(self.yt)
             if yt_attr.ndim == 1:
-                # Yt obtains its shape:
+                # Yt must be transposed into a column vector:
                 ncol_yt = len(yt_attr)
                 input_ndim = (1, ncol_yt)
                 input_yt = np.ndarray(input_ndim)
                 input_yt[0, :] = yt_attr
-                # yt sequence-like support, which required column basis upon d:
-                self.yt = input_yt
-            else:
-                OutOfRangeYt(
+            elif yt_attr.ndim > 2:
+                raise InputOutOfRange(
                     "yt must be either scalar, or a 1- or 2-dimensional array-like!")
+            self.yt = yt_attr
 
-        # Further Input dimension validation is performed within C calls:
+    # Make serialisable:
+    def to_dict(self):
+        """Return the coerced attributes of a KalmanFilter object as a dictionary"""
+        return asdict(self)
 
-        # Instantiate variables assigned during Kalman Smoothing:
-        self.filtered = False
-        self.smoothed = False
-        self.v = None
-        self.Kt = None
-        self.Ft_inv = None
-        self.xt = None
-        self.Pt = None
-
-    def _generate_filter_dict(self) -> dict[str, np.ndarray]:
-        """Generates the input dictionary required of compiled C functions kalman_filter and kalman_filter_verbose. 
-        Only typically intended to be called internally by the KalmanFilter class object. """
-        return {
-            "x": self.x,
-            "P": self.P,
-            "dt": self.dt,
-            "ct": self.ct,
-            "Tt": self.Tt,
-            "Zt": self.Zt,
-            "HHt": self.HHt,
-            "GGt": self.GGt,
-            "yt": self.yt
-        }
-
-    def _generate_smoother_dict(self) -> dict[str: np.ndarray]:
-        return {
-            "Tt": self.Tt,
-            "Zt": self.Zt,
-            "yt": self.yt,
-            "v": self.v,
-            "Kt": self.Kt,
-            "Ft_inv": self.Ft_inv,
-            "xt": self.xt,
-            "Pt": self.Pt,
-        }
+    # Make subscriptable:
+    def __getitem__(self, item):
+        return getattr(self, item)
 
     def kalman_filter_verbose(self) -> dict[str, Union[float, np.ndarray]]:
         # Call C process:
@@ -155,3 +115,8 @@ class KalmanFilter():
         The sequential processing algorithm is utilised for filtering / smoothing, which may result in inconsistencies in intermediate filtered values of ().
         See WhySequentialProcessing() for more detail."""
         pass
+
+
+@dataclass
+class KalmanFiltered(KalmanFilter):
+    vt: str
