@@ -3,6 +3,8 @@ from typing import Iterable
 
 import numpy as np
 
+from .exceptions import InputOutOfRange
+
 
 @dataclass
 class KalmanFilter():
@@ -49,7 +51,7 @@ class KalmanFilter():
         # yt coercion:
         # Scalar input support (making implicit assumption that d = 1):
         if np.isscalar(self.yt):
-            yt_attr = np.ndarray((1, len(self.yt)))
+            yt_attr = np.ndarray((1, 1))
             yt_attr[:] = self.yt
         elif type(self.yt) != np.ndarray:
             # Iterable input support:
@@ -74,49 +76,24 @@ class KalmanFilter():
     def __getitem__(self, item):
         return getattr(self, item)
 
-    def kalman_filter_verbose(self) -> dict[str, Union[float, np.ndarray]]:
-        # Call C process:
-        filtered_output = kalman_filter.kalman_filter_verbose(
-            self._generate_filter_dict())
-        # Assign filtered outputs to class variables:
-        self.filtered = True
-        self.v = filtered_output["vt"]
-        self.Kt = filtered_output["Kt"]
-        self.Ft_inv = filtered_output["Ft_inv"]
-        self.xt = filtered_output["xtt"]
-        self.Pt = filtered_output["Ptt"]
-
-        return filtered_output
-
-    def kalman_filter(self) -> float:
-        # Call C process:
-        return kalman_filter.kalman_filter(self._generate_filter_dict())
-
-    def kalman_smoother(self) -> dict[str, np.ndarray]:
-        """Requires that the kalman_filter class method has been executed."""
-        if not self.filtered:
-            # Filtered values not yet obtained. Run filter process, then smoother process:
-            filtered_smoothed = self.kalman_filter_smoother(
-                self._generate_smoother_dict())
-
-        # Call C process:
-        smoothed = kalman_filter.kalman_smoother(
-            self._generate_smoother_dict())
-
-        # Unpack result:
-        self.smoothed = True
-        self.xhatt = smoothed["xhatt"]
-        self.Vt = smoothed["Vt"]
-        return smoothed
-
-    def kalman_filter_smoother(self) -> dict[str, Union[float, np.ndarray]]:
-        """Consecutively executes both the linear forward Kalman filter algorithm and the backwards Kalman smoother algorithm 
-        within the same compiled C call, which may benefit from reduced computational overhead. 
-        The sequential processing algorithm is utilised for filtering / smoothing, which may result in inconsistencies in intermediate filtered values of ().
-        See WhySequentialProcessing() for more detail."""
-        pass
-
 
 @dataclass
 class KalmanFiltered(KalmanFilter):
-    vt: str
+    log_likelihood: float
+    vt: np.ndarray
+    Kt: np.ndarray
+    FT_inv: np.ndarray
+    xtt: np.ndarray
+    Ptt: np.ndarray
+
+
+@dataclass
+class KalmanSmoothed(KalmanFiltered):
+    log_likelihood: float
+    vt: np.ndarray
+    Kt: np.ndarray
+    FT_inv: np.ndarray
+    xtt: np.ndarray
+    Ptt: np.ndarray
+    xhatt: np.ndarray
+    Vt: np.ndarray
