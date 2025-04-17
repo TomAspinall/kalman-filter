@@ -1,3 +1,4 @@
+import inspect
 from dataclasses import asdict, dataclass
 from typing import Iterable
 
@@ -76,24 +77,38 @@ class KalmanFilter():
     def __getitem__(self, item):
         return getattr(self, item)
 
+    # Build class from dict, ignoring additional kwargs:
+    @classmethod
+    def from_dict(cls, input):
+        class_attributes = inspect.signature(cls).parameters
+        return cls(**{k: v for k, v in input.items() if k in class_attributes})
+
+    # Print condensed dimensions rather than arrays, which may be verbose:
+    def __repr__(self) -> str:
+        return f"KalmanFilter(yt={self.yt.shape}, x={self.x.shape}, P={self.P.shape}, dt={self.dt.shape}, ct={self.ct.shape}, Tt={self.Tt.shape}, Zt={self.Zt.shape}, HHt={self.HHt.shape}, GGt={self.GGt.shape})"
+
 
 @dataclass
 class KalmanFiltered(KalmanFilter):
+    """Kalman filter has been applied"""
     log_likelihood: float
     vt: np.ndarray
     Kt: np.ndarray
-    FT_inv: np.ndarray
+    Ft_inv: np.ndarray
     xtt: np.ndarray
     Ptt: np.ndarray
+
+    # Print condensed dimensions rather than arrays, which may be verbose:
+    def __repr__(self) -> str:
+        return f"KalmanFiltered(log_likelihood={self.log_likelihood:,.4f}, vt={self.vt.shape}, Kt={self.Kt.shape}, Ft_inv={self.Ft_inv.shape}, xtt={self.xtt.shape}, Ptt={self.Ptt.shape}"
 
 
 @dataclass
 class KalmanSmoothed(KalmanFiltered):
-    log_likelihood: float
-    vt: np.ndarray
-    Kt: np.ndarray
-    FT_inv: np.ndarray
-    xtt: np.ndarray
-    Ptt: np.ndarray
+    """Kalman filter and smoother has been applied"""
     xhatt: np.ndarray
     Vt: np.ndarray
+
+    # Print condensed dimensions rather than arrays, which may be verbose:
+    def __repr__(self) -> str:
+        return f"KalmanSmoothed(log_likelihood={self.log_likelihood:,.4f}, xhatt={self.xhatt.shape}, Vt={self.Vt.shape}"
