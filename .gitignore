@@ -3,4 +3,5 @@ libopenblas.dll
 .vscode
 build/*
 *.pyd
+external/
 __pycache__
