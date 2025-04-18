@@ -8,3 +8,7 @@ class KalmanFilterNotExecuted(Exception):
 
 class InputOutOfRange(Exception):
     pass
+
+
+class ShapeIncompatible(Exception):
+    pass
