@@ -1,7 +1,7 @@
 from numpy import ndarray
 
 from .models import KalmanFilter, KalmanFiltered, KalmanSmoothed
-from .src import kalman_filter as KF
+from .native import kalman_filter as KF
 
 
 def kalman_filter(filter: KalmanFilter) -> float:
@@ -45,7 +45,7 @@ def kalman_smoother(smoother: KalmanFilter | KalmanFiltered) -> KalmanSmoothed:
 
     # Call compiled C-Code with validated inputs:
     output = KF.kalman_smoother(smoother_input)
-    return KalmanSmoothed.from_dict(output | filter_input)
+    return KalmanSmoothed.from_dict(output | smoother_input)
 
 
 def kalman_smoother_optimise(smoother: dict[str, ndarray], filtered: bool = False) -> dict[str, float | ndarray]:

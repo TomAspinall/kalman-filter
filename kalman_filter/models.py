@@ -203,4 +203,4 @@ class KalmanSmoothed(KalmanFiltered):
 
     # Print condensed dimensions rather than arrays, which may be verbose:
     def __repr__(self) -> str:
-        return f"KalmanSmoothed(log_likelihood={self.log_likelihood:,.4f}, xhatt={self.xhatt.shape}, Vt={self.Vt.shape}"
+        return f"KalmanSmoothed(log_likelihood={self.log_likelihood:,.4f}, xhatt={self.xhatt.shape}, Vt={self.Vt.shape})"
