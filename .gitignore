@@ -3,3 +3,11 @@ libopenblas.dll
 .vscode
 build/*
 *.pyd
+external/
+__pycache__
+*.dll
+# dist directory is where sdist/wheel end up
+dist
+# Egg metadata
+*.egg-info
+build

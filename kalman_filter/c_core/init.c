@@ -792,34 +792,34 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_ValueError, "'yt' is not 1 or 2-dimensional");
         return NULL;
     }
-    if (array_ndims[1] != 2 && array_ndims[1] != 3)
-    {
-        PyErr_SetString(PyExc_ValueError, "'Tt' is not 2- or 3-dimensional");
-        return NULL;
-    }
-    if (array_ndims[2] != 2 && array_ndims[2] != 3)
-    {
-        PyErr_SetString(PyExc_ValueError, "'Zt' is not 2- or 3-dimensional");
-        return NULL;
-    }
-    if (array_ndims[3] != 2)
+    if (array_ndims[1] != 2)
     {
         PyErr_SetString(PyExc_ValueError, "'xt' is not 2-dimensional");
         return NULL;
     }
-    if (array_ndims[4] != 3)
+    if (array_ndims[2] != 3)
     {
         PyErr_SetString(PyExc_ValueError, "'Pt' is not 3-dimensional");
         return NULL;
     }
-    if (array_ndims[5] != 2)
+    if (array_ndims[3] != 2)
     {
         PyErr_SetString(PyExc_ValueError, "'Ft_inv' is not 2-dimensional");
         return NULL;
     }
-    if (array_ndims[6] != 3)
+    if (array_ndims[4] != 3)
     {
         PyErr_SetString(PyExc_ValueError, "'Kt' is not 3-dimensional");
+        return NULL;
+    }
+    if (array_ndims[5] != 2 && array_ndims[5] != 3)
+    {
+        PyErr_SetString(PyExc_ValueError, "'Tt' is not 2- or 3-dimensional");
+        return NULL;
+    }
+    if (array_ndims[6] != 2 && array_ndims[6] != 3)
+    {
+        PyErr_SetString(PyExc_ValueError, "'Zt' is not 2- or 3-dimensional");
         return NULL;
     }
     if (array_ndims[7] != 2)
@@ -919,7 +919,7 @@ static PyMethodDef KalmanFilterMethods[] = {
 /* Create PyModuleDef structure */
 static struct PyModuleDef KalmanFilterStruct = {
     PyModuleDef_HEAD_INIT,
-    "kalman_filter",                                                                                             // name of module
+    "c_core",
     "Kalman filtering & smoothing through compile C code. Closely coupled with the kalman_filter python module", // Documentation
     -1,
     KalmanFilterMethods,
@@ -929,7 +929,7 @@ static struct PyModuleDef KalmanFilterStruct = {
     NULL};
 
 /* Module initialization */
-PyObject *PyInit_kalman_filter(void)
+PyObject *PyInit_c_core(void)
 {
 
     import_array();
