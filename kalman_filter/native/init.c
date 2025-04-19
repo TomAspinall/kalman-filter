@@ -919,7 +919,7 @@ static PyMethodDef KalmanFilterMethods[] = {
 /* Create PyModuleDef structure */
 static struct PyModuleDef KalmanFilterStruct = {
     PyModuleDef_HEAD_INIT,
-    "kalman_filter",                                                                                             // name of module
+    "c_core",
     "Kalman filtering & smoothing through compile C code. Closely coupled with the kalman_filter python module", // Documentation
     -1,
     KalmanFilterMethods,
@@ -929,7 +929,7 @@ static struct PyModuleDef KalmanFilterStruct = {
     NULL};
 
 /* Module initialization */
-PyObject *PyInit_kalman_filter(void)
+PyObject *PyInit_c_core(void)
 {
 
     import_array();

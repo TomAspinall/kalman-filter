@@ -1,0 +1,6 @@
+global-include *.h
+global-include *.c
+include LICENSE
+include pyproject.toml
+include setup.py
+include external/OpenBLAS-0.3.28-x64-64/lib/*.lib

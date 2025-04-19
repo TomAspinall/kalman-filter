@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "numpy"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kalman_filter"
+version = "0.0.1"
+license = "GPL-3.0-or-later"
+description = "Fast and efficient Kalman filtering and smoothing"
+authors = [{ name = "Thomas Aspinall", email = "tomaspinall2512@gmail.com" }]
+maintainers = [
+    { name = "Thomas Aspinall", email = "tomaspinall2512@gmail.com" },
+]
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = ["numpy>=1.22"]
+keywords = ["Kalman", "Kalman filter", "state space", "state space methods"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    'Topic :: Software Development',
+    'Topic :: Scientific/Engineering',
+    'Programming Language :: C',
+    'Programming Language :: Python :: Implementation :: CPython',
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    'Typing :: Typed',
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+
+[project.urls]
+repository = "https://github.com/TomAspinall/kalman-filter"
+changelog = "https://github.com/TomAspinall/kalman-filter/CHANGELOG.md"
+issues = "https://github.com/TomAspinall/kalman-filter/issues"
+"Dissertation" = "https://pure.bond.edu.au/ws/portalfiles/portal/167739220/Thomas_Aspinall_Thesis.pdf"
+
+[tool.setuptools]
+packages = ["kalman_filter", "kalman_filter.native"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+kalman_filter = ["*.h"]
+
+# [tool.setuptools]
+# ext-modules = [
+#     { name = "kalman_filter.native", sources = [
+#         "kalman_filter_verbose.c",
+#         "utils.c",
+#         "init.c",
+#         "kalman_filter.c",
+#         "kalman_smoother.c",
+#     ], libraries = [
+#         'libopenblas',
+#     ], include-dirs = [
+#         "C:\\Users\\Tpm Aspinall\\.conda\\envs\\kalman_filter\\Lib\\site-packages\\numpy\\_core\\include",
+#         "C:\\Users\\Tpm Aspinall\\Documents\\Work\\OpenBLAS-0.3.28-x64-64\\include\\",
+#         '.',
+#     ] },
+# ]

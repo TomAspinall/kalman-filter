@@ -1,7 +1,7 @@
 from numpy import ndarray
 
 from .models import KalmanFilter, KalmanFiltered, KalmanSmoothed
-from .native import kalman_filter as KF
+from .native import c_core as KF
 
 
 def kalman_filter(filter: KalmanFilter) -> float:
