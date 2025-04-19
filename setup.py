@@ -1,13 +1,10 @@
 import os
 from distutils.core import Extension, setup
-from pathlib import Path
 
 import numpy as np
 
 # Compiled C code directory:
-here = Path(__file__).parent.resolve()
-native_dir = str(here) + "kalman_filter/native"
-src_directory = "kalman_filter\\native"
+src_directory = "kalman_filter\\c_core"
 
 CBLAS_DIR = "external\\OpenBLAS-0.3.28-x64-64"
 cblas_include_dir = os.path.join(CBLAS_DIR, "include")
