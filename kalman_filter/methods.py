@@ -1,4 +1,3 @@
-from numpy import ndarray
 
 # from .native import c_core as KF
 from . import c_core as KF
@@ -11,14 +10,6 @@ def kalman_filter(filter: KalmanFilter) -> float:
     filter_input = filter.to_dict()
     # Call compiled C-Code with validated inputs:
     return KF.kalman_filter(filter_input)
-
-
-def kalman_filter_optimise(filter: dict[str, ndarray]) -> float:
-    """Unsafe variant of the `kalman_filter` method. Designed for optimisation routines, reducing type safety overhead to deliver optimum performance when run in an optimisation loop.
-
-    It is **highly recommended* you use the `kalman_filter` function and `KalmanFilter` object if you are unfamiliar with the structure of your algorithm.
-    """
-    return KF.kalman_filter(filter)
 
 
 def kalman_filter_verbose(filter: KalmanFilter) -> KalmanFiltered:
@@ -48,12 +39,3 @@ def kalman_smoother(smoother: KalmanFilter | KalmanFiltered) -> KalmanSmoothed:
     # Call compiled C-Code with validated inputs:
     output = KF.kalman_smoother(smoother_input)
     return KalmanSmoothed.from_dict(output | smoother_input)
-
-
-def kalman_smoother_optimise(smoother: dict[str, ndarray], filtered: bool = False) -> dict[str, float | ndarray]:
-    if filtered:
-        smoother_input = smoother
-    else:
-        filter_output = KF.kalman_filter_verbose(smoother)
-        smoother_input = smoother | filter_output
-    return KF.kalman_smoother(smoother_input)
