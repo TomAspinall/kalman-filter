@@ -4,3 +4,6 @@ The data originates from:
  - `treering`: `(7981, )` - Normalized tree-ring widths in dimensionless units. Each tree ring corresponds to one year.
 
 The original data are considered to be in the public domain.
+
+For the source of these datasets, please see (in [R]):
+[library(help = "datasets")](https://rdrr.io/r/datasets/datasets-package.html)
