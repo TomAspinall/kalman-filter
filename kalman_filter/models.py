@@ -102,7 +102,7 @@ class KalmanFilter():
                 input_ndarr[:] = input
             elif type(input) != np.ndarray:
                 # Iterable support:
-                input_ndarr = np.array(input)
+                input_ndarr = np.array(input, dtype="float64")
             else:
                 # No coercion necessary:
                 continue
@@ -115,13 +115,10 @@ class KalmanFilter():
             yt_attr[:] = self.yt
         elif type(self.yt) != np.ndarray:
             # Iterable input support:
-            yt_attr = np.array(self.yt)
+            yt_attr = np.array(self.yt, dtype="float64")
             if yt_attr.ndim == 1:
                 # Yt must be transposed into a column vector:
-                ncol_yt = len(yt_attr)
-                input_ndim = (1, ncol_yt)
-                input_yt = np.ndarray(input_ndim)
-                input_yt[0, :] = yt_attr
+                yt_attr = yt_attr.reshape((1, len(yt_attr)))
             elif yt_attr.ndim > 2:
                 raise InputOutOfRange(
                     "yt must be either scalar, or a 1- or 2-dimensional array-like!")
@@ -143,7 +140,7 @@ class KalmanFilter():
         elif self.dt.shape[0] != m:
             raise ShapeIncompatible(
                 "`dt` - `(m, d)` dimensions do not match `x` - `(m, 1)`")
-        elif self.dt.shape[1] != 1 and self.dt.shape[1] != d:
+        elif self.dt.ndim > 1 and self.dt.shape[1] not in (1, d):
             raise ShapeIncompatible(
                 "`dt` - `(m, d)` dimensions do not match `yt` - `(d, n)`")
         elif any(x != m for x in self.Tt.shape[:1]):
@@ -153,7 +150,7 @@ class KalmanFilter():
             else:
                 raise ShapeIncompatible(
                     "`Tt` - `(m, m, d)` dimensions do not match `x` - `(m, 1)`")
-        elif (self.Tt.shape[2] > 1 and self.Tt.shape[2] != d):
+        elif self.Tt.ndim > 2 and self.Tt.shape[2] not in (1, d):
             raise ShapeIncompatible(
                 "`Tt` - `(m, m, d)` dimensions do not match `yt` - `(d, n)`")
 
