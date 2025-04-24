@@ -1,13 +1,13 @@
 # Kalman-Filtering and Smoothing through optimised algorithms:
 
-An implementation of the linear Kalman filtering and smoothing algorithms. This module is designed to be computationally efficient, implementing the "sequential processing" algorithm using the numpy C-api to increase algorithm performance. Designed specifically for those who have developed the underlying arrays that are used for computing the Kalman filter, but require this algorithm within numeric optimisation or within additional filtering/smoothing outputs.
+An implementation of the linear Kalman filtering and smoothing algorithms. This module is designed to be computationally efficient, implementing the "sequential processing" algorithm using the numpy C-api to increase algorithm performance. Designed specifically for those who have developed the underlying arrays that are used for computing the Kalman filter, but require this algorithm within numeric optimisation or within additional filtering/smoothing outputs. The `kalman-filter` module supports N/A (i.e., missing) measurements in the measurement array and constant or time-varying input arrays.
 
 # Quick Use:
 
 Construct the input arrays of the Kalman filter and provide these to the module:
 
 ```python
-import kalman_filter
+import kalman_filter as kf
 
 kalman_filter_dict = {
     "yt": [200, 300, 400, 500],
@@ -22,16 +22,16 @@ kalman_filter_dict = {
 }
 
 # Enforce algorithm safety using the `KalmanFilter` object:
-kalman_filter_input = kalman_filter.KalmanFilter.from_dict(kalman_filter_dict)
+kalman_filter_input = kf.KalmanFilter.from_dict(kalman_filter_dict)
 
 # Given type-safety, execute the Kalman filter algorithm:
-log_likelihood = kalman_filter.kalman_filter(kalman_filter_input)
+log_likelihood = kf.kalman_filter(kalman_filter_input)
 
 # Execute the algorithm and returning algorithm arrays:
-filtered_outputs = kalman_filter.kalman_filter_verbose(kalman_filter_input)
+filtered_outputs = kf.kalman_filter_verbose(kalman_filter_input)
 
 # Execute the Kalman smoother algorithm:
-smoothed_outputs = kalman_filter.kalman_smoother(kalman_filter_input)
+smoothed_outputs = kf.kalman_smoother(kalman_filter_input)
 ```
 
 # Sequential Procesing:

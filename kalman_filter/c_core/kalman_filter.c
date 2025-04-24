@@ -143,7 +143,7 @@ void ckalman_filter(
                                 // Compute Ft = Zt[SP,,t * incZt] %*% Pt %*% t(Zt[SP,,t * incZt]) + diag(GGt)[SP]
 
                                 // First, Let us calculate:
-                                // Pt %*% t(Zt[SP,,t * incZt])
+                                // tmpmxSP = Pt %*% t(Zt[SP,,t * incZt])
                                 // because we use this result twice
                                 cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,
                                             blas_m, intone, blas_m,
@@ -202,6 +202,99 @@ void ckalman_filter(
 #ifdef DEBUGMODE
                                 printf("\n Log-Likelihood: %f \n", *loglik);
 #endif
+                        }
+                }
+                /*******************************************/
+                /* ---------- case 2: some NA's ---------- */
+                /*******************************************/
+                else
+                {
+                        // Total observations this time period:
+                        int d_reduced = d - na_sum;
+                        N_obs += d_reduced;
+
+                        // Temporary, reduced arrays:
+                        reduce_array(&yt[d * t], d, 1, yt_temp, positions, d_reduced);
+                        reduce_array(&ct[d * t * incct], d, 1, ct_temp, positions, d_reduced);
+                        reduce_array(&Zt[m_x_d * t * incZt], d, m, Zt_temp, positions, d_reduced);
+                        reduce_array(&GGt[d * t * incGGt], d, 1, GGt_temp, positions, d_reduced);
+
+                        // Sequential Processing - Univariate Treatment of the Multivariate Series:
+                        for (int SP = 0; SP < d_reduced; SP++)
+                        {
+                                // Get the specific values of Z for SP:
+                                for (int j = 0; j < m; j++)
+                                {
+                                        Zt_tSP[j] = Zt_temp[SP + j * d_reduced];
+                                }
+
+                                // Step 1 - Measurement Error:
+                                // Compute Vt[SP,t] = yt[SP,t] - ct[SP,t * incct] - Zt[SP,,t * incZt] %*% at[SP,t]
+                                V = yt_temp[SP] - ct_temp[SP];
+                                // vt[SP, t] = vt[SP, t] - Zt[SP, , t * incZt] % *% at[, t]
+                                cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
+                                            intone, intone, blas_m,
+                                            dblminusone, Zt_tSP, intone,
+                                            at, blas_m,
+                                            dblone, &V, intone);
+
+                                // Step 2 - Function of Covariance Matrix:
+                                // Compute Ft = Zt[SP,,t * incZt] %*% Pt %*% t(Zt[SP,,t * incZt]) + diag(GGt)[SP]
+                                // Where GGt is already input within this algorithm as the diagonals of the variance / covariance matrix.
+
+                                // First, Let us calculate:
+                                // tmpmxSP = Pt %*% t(Zt[SP,,t * incZt])
+                                // because we use this result twice
+                                cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,
+                                            blas_m, intone, blas_m,
+                                            dblone, Pt, blas_m,
+                                            Zt_tSP, intone,
+                                            dblzero, tmpmxSP, blas_m);
+
+                                // Ft = GGt[SP]
+                                Ft = GGt_temp[SP];
+
+                                // Ft = Zt[SP,,t*incZt] %*% tmpmxSP + Ft
+                                cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
+                                            intone, intone, blas_m,
+                                            dblone, Zt_tSP, intone,
+                                            tmpmxSP, blas_m,
+                                            dblone, &Ft, intone);
+
+                                // Inv Ft:
+                                tmpFtinv = 1 / Ft;
+
+                                // Kt is an m x 1 matrix
+
+                                // We already have tmpSPxm:
+                                // Kt = tmpmxSP %*% tmpFtinv
+                                cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
+                                            blas_m, intone, intone,
+                                            dblone, tmpmxSP, blas_m,
+                                            &tmpFtinv, intone,
+                                            dblzero, Kt, blas_m);
+
+                                // Step 4 - Correct State Vector mean and Covariance:
+
+                                // Correction to att based upon prediction error:
+                                // att = Kt %*% V + att
+                                cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
+                                            blas_m, intone, intone,
+                                            dblone, Kt, blas_m,
+                                            &V, intone,
+                                            dblone, at, blas_m);
+
+                                // Correction to covariance based upon Kalman Gain:
+                                // ptt = ptt - ptt %*% t(Z[SP,,i * incZt]) %*% t(Ktt)
+                                // ptt = ptt - tempmxSP %*% t(Ktt)
+                                cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,
+                                            blas_m, blas_m, intone,
+                                            dblminusone, tmpmxSP, blas_m,
+                                            Kt, blas_m,
+                                            dblone, Pt, blas_m);
+
+                                // Step 5 - Update Log-Likelihood Score:
+                                *loglik -= 0.5 * (log(Ft) + (V * V * tmpFtinv));
                         }
                 }
 
