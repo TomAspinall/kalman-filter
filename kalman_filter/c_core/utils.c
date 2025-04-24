@@ -1,9 +1,9 @@
 #include <Python.h>
 #include "numpy/arrayobject.h"
 
-/* Macro to transform an index of a 2-dimensional array into an index of a vector */
-#define IDX(i, j, ncols) ((i) * (ncols) + (j))
-/* Macro to transform an index of a 3-dimensional array into an index of a vector */
+//  Macro to transform an index of a 2-dimensional array into an index of a vector
+#define IDX(i, j, dim0) ((i) + (j) * (dim0))
+// Macro to transform an index of a 3-dimensional array into an index of a vector
 #define IDX_3D(i, j, k, ncols, ndepth) ((i) * (ncols) * (ndepth) + (j) * (ndepth) + (k))
 
 /* Print arrays */
