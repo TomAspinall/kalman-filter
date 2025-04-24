@@ -2,17 +2,20 @@
 import json
 
 # Import example module:
-import kalman_filter
+import kalman_filter as kf
 
 # Load example data:
 with open('data/nile.json', 'r') as f:
     nile = json.load(f)
 
-# Develop a simplified one-factor, one-measurement, time constant measurement payload for the `kalman-filter` module:
+# missing measurements are supported (if applicable):
+nile[1] = None
 
-# Total observations:
+# Develop a simplified one-state variable, one-measurement, time constant measurement payload for the `kalman-filter` module:
+
+# Total measurements:
 n = len(nile)
-# Observations per time point:
+# Measurements per time point:
 d = 1
 # Total state variables:
 m = 1
@@ -31,7 +34,7 @@ ct = 0
 Tt = 1
 Zt = 1
 # Little is known of these arguments initially, setting them to very high values:
-# Note: these arguments could possiblyu be estimated through MLE:
+# Note: these arguments could possibly be estimated through MLE:
 GGt = 15000
 HHt = 1300
 
@@ -49,20 +52,20 @@ kalman_filter_dict = {
 }
 
 # Coerce inputs into a compatible `KalmanFilter` object with algorithm safety:
-kalman_filter_input = kalman_filter.KalmanFilter(**kalman_filter_dict)
+kalman_filter_input = kf.KalmanFilter(**kalman_filter_dict)
 print(kalman_filter_input)
 
 # Given validated inputs for the Kalman filter algorithm, execute the algorithm:
-kalman_filter_log_likelihood = kalman_filter.kalman_filter(kalman_filter_input)
+kalman_filter_log_likelihood = kf.kalman_filter(kalman_filter_input)
 print(kalman_filter_log_likelihood)
 # For more involved algorithm outputs, execute the verbose filter:
-kalman_filter_object = kalman_filter.kalman_filter_verbose(kalman_filter_input)
+kalman_filter_object = kf.kalman_filter_verbose(kalman_filter_input)
 print(kalman_filter_object)
 
-# Kalman filter, then smooth, of the algorithm inputs, in the same function call (i.e., additional computational expense):
-kalman_filter_smoother = kalman_filter.kalman_smoother(kalman_filter_input)
+# Perform Kalman filtering, then smoothing:
+kalman_filter_smoother = kf.kalman_smoother(kalman_filter_input)
 print(kalman_filter_smoother)
 
 # Kalman Smoothing of the filtered object:
-kalman_filtered_smoothed = kalman_filter.kalman_smoother(kalman_filter_object)
+kalman_filtered_smoothed = kf.kalman_smoother(kalman_filter_object)
 print(kalman_filtered_smoothed)
