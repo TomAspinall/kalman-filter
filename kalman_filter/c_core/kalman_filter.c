@@ -119,10 +119,7 @@ void ckalman_filter(
 #endif
 
                                 // Get the specific values of Z for SP:
-                                for (int j = 0; j < m; j++)
-                                {
-                                        Zt_tSP[j] = Zt_t[SP + j * d];
-                                }
+                                cblas_dcopy(m, &Zt_t[SP], d, Zt_tSP, 1);
 
                                 // Step 1 - Measurement Error:
                                 // Compute Vt[SP,t] = yt[SP,t] - ct[SP,t * incct] + Zt[SP,,t * incZt] %*% at[SP,t]
@@ -223,10 +220,7 @@ void ckalman_filter(
                         for (int SP = 0; SP < d_reduced; SP++)
                         {
                                 // Get the specific values of Z for SP:
-                                for (int j = 0; j < m; j++)
-                                {
-                                        Zt_tSP[j] = Zt_temp[SP + j * d_reduced];
-                                }
+                                cblas_dcopy(m, &Zt_temp, d_reduced, Zt_tSP, 1);
 
                                 // Step 1 - Measurement Error:
                                 // Compute Vt[SP,t] = yt[SP,t] - ct[SP,t * incct] - Zt[SP,,t * incZt] %*% at[SP,t]
