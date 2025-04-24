@@ -156,17 +156,17 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     }
 
     // Total observations (n):
-    if (array_dims[3][1] != n && array_dims[3][1] != 1)
+    if (array_ndims[3] > 1 && array_dims[3][1] != n && array_dims[3][1] != 1)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'dt' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
     }
-    if (array_dims[4][1] != n && array_dims[4][1] != 1)
+    if (array_ndims[4] > 1 && array_dims[4][1] != n && array_dims[4][1] != 1)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
     }
-    if (array_dims[5][1] != n && array_dims[5][1] != 1)
+    if (array_ndims[5] > 1 && array_dims[5][1] != n && array_dims[5][1] != 1)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'GGt' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
@@ -203,12 +203,11 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     int incGGt = 0;
     if (array_ndims[5] > 1)
     {
-        if (array_dims[5][1] == 1)
+        if (array_dims[5][1] == (npy_intp)1)
         {
             incGGt = 0;
         }
-        else if (
-            array_dims[5][1] == int_n)
+        else if (array_dims[5][1] == n)
         {
             incGGt = 1;
         }
@@ -223,12 +222,11 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     int incHHt = 0;
     if (array_ndims[8] > 2)
     {
-        if (array_dims[8][2] == 1)
+        if (array_dims[8][2] == (npy_intp)1)
         {
             incHHt = 0;
         }
-        else if (
-            array_dims[8][2] == int_n)
+        else if (array_dims[8][2] == n)
         {
             incHHt = 1;
         }
@@ -246,15 +244,15 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     printf("Debug: d is: (%Id)\n", d);
 
     // Print input dimensions:
-    print_npy_intp_array(x_dims, 1, 1, "x_dims");
-    print_npy_intp_array(P_dims, 1, 2, "P_dims");
-    print_npy_intp_array(dt_dims, 1, 2, "dt_dims");
-    print_npy_intp_array(ct_dims, 1, 2, "ct_dims");
-    print_npy_intp_array(Tt_dims, 1, 3, "Tt_dims");
-    print_npy_intp_array(Zt_dims, 1, 3, "Zt_dims");
-    print_npy_intp_array(HHt_dims, 1, 3, "HHt_dims");
-    print_npy_intp_array(GGt_dims, 1, 2, "GGt_dims");
-    print_npy_intp_array(yt_dims, 1, 2, "yt_dims");
+    print_npy_intp_array(array_dims[0], 1, 1, "x_dims");
+    print_npy_intp_array(array_dims[1], 1, 2, "P_dims");
+    print_npy_intp_array(array_dims[2], 1, 2, "yt_dims");
+    print_npy_intp_array(array_dims[3], 1, 2, "dt_dims");
+    print_npy_intp_array(array_dims[4], 1, 2, "ct_dims");
+    print_npy_intp_array(array_dims[5], 1, 2, "GGt_dims");
+    print_npy_intp_array(array_dims[6], 1, 3, "Tt_dims");
+    print_npy_intp_array(array_dims[7], 1, 3, "Zt_dims");
+    print_npy_intp_array(array_dims[8], 1, 3, "HHt_dims");
 
 #endif
 
@@ -473,17 +471,17 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     }
 
     // Total observations (n):
-    if (array_dims[3][1] != n && array_dims[3][1] != 1)
+    if (array_ndims[3] > 1 && array_dims[3][1] != n && array_dims[3][1] != 1)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'dt' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
     }
-    if (array_dims[4][1] != n && array_dims[4][1] != 1)
+    if (array_ndims[4] > 1 && array_dims[4][1] != n && array_dims[4][1] != 1)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
     }
-    if (array_dims[5][1] != n && array_dims[5][1] != 1)
+    if (array_ndims[5] > 1 && array_dims[5][1] != n && array_dims[5][1] != 1)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'GGt' does not match either 1 or number of observations/columns of 'yt'");
         return NULL;
@@ -520,12 +518,11 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     int incGGt = 0;
     if (array_ndims[5] > 1)
     {
-        if (array_dims[5][1] == 1)
+        if (array_dims[5][1] == (npy_intp)1)
         {
             incGGt = 0;
         }
-        else if (
-            array_dims[5][1] == int_n)
+        else if (array_dims[5][1] == n)
         {
             incGGt = 1;
         }
@@ -540,12 +537,11 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     int incHHt = 0;
     if (array_ndims[8] > 2)
     {
-        if (array_dims[8][2] == 1)
+        if (array_dims[8][2] == (npy_intp)1)
         {
             incHHt = 0;
         }
-        else if (
-            array_dims[8][2] == int_n)
+        else if (array_dims[8][2] == n)
         {
             incHHt = 1;
         }
@@ -563,15 +559,15 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     printf("Debug: d is: (%Id)\n", d);
 
     // Print input dimensions:
-    print_npy_intp_array(x_dims, 1, 1, "x_dims");
-    print_npy_intp_array(P_dims, 1, 2, "P_dims");
-    print_npy_intp_array(dt_dims, 1, 2, "dt_dims");
-    print_npy_intp_array(ct_dims, 1, 2, "ct_dims");
-    print_npy_intp_array(Tt_dims, 1, 3, "Tt_dims");
-    print_npy_intp_array(Zt_dims, 1, 3, "Zt_dims");
-    print_npy_intp_array(HHt_dims, 1, 3, "HHt_dims");
-    print_npy_intp_array(GGt_dims, 1, 2, "GGt_dims");
-    print_npy_intp_array(yt_dims, 1, 2, "yt_dims");
+    print_npy_intp_array(array_dims[0], 1, 1, "x_dims");
+    print_npy_intp_array(array_dims[1], 1, 2, "P_dims");
+    print_npy_intp_array(array_dims[2], 1, 2, "yt_dims");
+    print_npy_intp_array(array_dims[3], 1, 2, "dt_dims");
+    print_npy_intp_array(array_dims[4], 1, 2, "ct_dims");
+    print_npy_intp_array(array_dims[5], 1, 2, "GGt_dims");
+    print_npy_intp_array(array_dims[6], 1, 3, "Tt_dims");
+    print_npy_intp_array(array_dims[7], 1, 3, "Zt_dims");
+    print_npy_intp_array(array_dims[8], 1, 3, "HHt_dims");
 
 #endif
 
