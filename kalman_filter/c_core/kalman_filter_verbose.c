@@ -5,11 +5,11 @@
 #include <utils.h>
 
 void ckalman_filter_verbose(
-    // n: the total number of observations
+    // n: the total number of measurements
     int n,
     // m: the dimension of the state vector
     int m,
-    // d: the dimension of observations
+    // d: the dimension of measurements
     int d,
     // Filter State Estimate:
     double *x,
@@ -115,7 +115,7 @@ void ckalman_filter_verbose(
 
                         // Create Zt for time t
                         cblas_dcopy(m_x_d, &Zt[m_x_d * t * incZt], intone, Zt_t, intone);
-                        // Increment number of observations:
+                        // Increment number of measurements:
                         N_obs += d;
 
                         // Sequential Processing - Univariate Treatment of the Multivariate Series:
@@ -213,7 +213,7 @@ void ckalman_filter_verbose(
                 /*******************************************/
                 else
                 {
-                        // Total observations this time period:
+                        // Total measurements this time period:
                         int d_reduced = d - na_sum;
                         N_obs += d_reduced;
 
@@ -227,7 +227,7 @@ void ckalman_filter_verbose(
                         for (int SP = 0; SP < d_reduced; SP++)
                         {
                                 // Get the specific values of Z for SP:
-                                cblas_dcopy(m, &Zt_temp, d_reduced, Zt_tSP, 1);
+                                cblas_dcopy(m, &Zt_t[SP], d_reduced, Zt_tSP, 1);
 
                                 // Step 1 - Measurement Error:
                                 // Compute Vt[SP,t] = yt[SP,t] - ct[SP,t * incct] - Zt[SP,,t * incZt] %*% at[SP,t]
