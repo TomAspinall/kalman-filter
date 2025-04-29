@@ -128,12 +128,16 @@ void ckalman_filter_verbose(
                                 // Get the specific values of Z for SP:
                                 cblas_dcopy(m, &Zt_t[SP], d, Zt_tSP, 1);
 
+#ifdef DEBUGMODE
+                                print_array(Zt_tSP, m, 1, "Zt_tSP");
+#endif
+
                                 // Step 1 - Measurement Error:
                                 // Compute Vt[SP,t] = yt[SP,t] - ct[SP,t * incct] + Zt[SP,,t * incZt] %*% at[SP,t]
                                 vt_output[SP + d * t] = yt[SP + d * t] - ct[SP + d * t * incct];
 
 #ifdef DEBUGMODE
-                                print_array(Zt_tSP, 1, m, "Zt_tSP");
+                                printf("V = %f", vt_output[SP + d * t]);
 #endif
 
                                 // vt[SP,t] = vt[SP,t] - Zt[SP,, t * incZt] %*% at[,t]
@@ -227,11 +231,20 @@ void ckalman_filter_verbose(
                         for (int SP = 0; SP < d_reduced; SP++)
                         {
                                 // Get the specific values of Z for SP:
-                                cblas_dcopy(m, &Zt_t[SP], d_reduced, Zt_tSP, 1);
+                                cblas_dcopy(m, &Zt_temp[SP], d_reduced, Zt_tSP, 1);
+
+#ifdef DEBUGMODE
+                                print_array(Zt_tSP, m, 1, "Zt_tSP");
+#endif
 
                                 // Step 1 - Measurement Error:
                                 // Compute Vt[SP,t] = yt[SP,t] - ct[SP,t * incct] - Zt[SP,,t * incZt] %*% at[SP,t]
                                 vt_output[SP + d * t] = yt_temp[SP] - ct_temp[SP];
+
+#ifdef DEBUGMODE
+                                printf("V = %f", vt_output[SP + d * t]);
+#endif
+
                                 // TODO - Return in the correct positions? positions[SP];
                                 // vt[SP, t] = vt[SP, t] - Zt[SP, , t * incZt] % *% at[, t]
                                 cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
@@ -297,6 +310,9 @@ void ckalman_filter_verbose(
 
                                 // Step 5 - Update Log-Likelihood Score:
                                 *loglik -= 0.5 * (log(Ft) + (vt_output[SP + d * t] * vt_output[SP + d * t] * Ft_inv_output[SP + d * t]));
+#ifdef DEBUGMODE
+                                printf("\n Log-Likelihood: %f \n", *loglik);
+#endif
                         }
                 }
 
@@ -309,7 +325,7 @@ void ckalman_filter_verbose(
                 /* ---------------------------------------------------------------------- */
 
 #ifdef DEBUGMODE
-                print_array(at, 1, m, "at:");
+                print_array(at, m, 1, "at:");
 #endif
 
                 // tmpmxSP = Tt[,,i * incTt] %*% att[,i]
@@ -329,7 +345,7 @@ void ckalman_filter_verbose(
                 cblas_daxpy(blas_m, dblone, tmpmxSP, intone, at, intone);
 
 #ifdef DEBUGMODE
-                print_array(at, 1, m, "atp1:");
+                print_array(at, m, 1, "atp1:");
                 print_array(Pt, m, m, "Pt:");
 #endif
 
@@ -359,7 +375,7 @@ void ckalman_filter_verbose(
                             dblone, Pt, blas_m);
 
 #ifdef DEBUGMODE
-                print_array(at, 1, m, "at:");
+                print_array(at, m, 1, "at:");
                 print_array(Pt, m, m, "Pt:");
                 printf("\n---------- iteration %i ----------\n", t + 1);
 #endif

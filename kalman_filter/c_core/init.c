@@ -199,44 +199,6 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // Support for either 1- or 2-dimensional:
-    int incGGt = 0;
-    if (array_ndims[5] > 1)
-    {
-        if (array_dims[5][1] == (npy_intp)1)
-        {
-            incGGt = 0;
-        }
-        else if (array_dims[5][1] == n)
-        {
-            incGGt = 1;
-        }
-        else
-        {
-            PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'GGt' does not equal the number of observations of 'yt'");
-            return NULL;
-        }
-    }
-
-    // Support for either 2- or 3-dimensional:
-    int incHHt = 0;
-    if (array_ndims[8] > 2)
-    {
-        if (array_dims[8][2] == (npy_intp)1)
-        {
-            incHHt = 0;
-        }
-        else if (array_dims[8][2] == n)
-        {
-            incHHt = 1;
-        }
-        else
-        {
-            PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'HHt' does not equal the number of observations of 'yt'");
-            return NULL;
-        }
-    }
-
 #ifdef DEBUGMODE
     // Print algorithm dimensions:
     printf("Debug: n is: (%Id)\n", n);
@@ -245,14 +207,14 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
 
     // Print input dimensions:
     print_npy_intp_array(array_dims[0], 1, 1, "x_dims");
-    print_npy_intp_array(array_dims[1], 1, 2, "P_dims");
-    print_npy_intp_array(array_dims[2], 1, 2, "yt_dims");
-    print_npy_intp_array(array_dims[3], 1, 2, "dt_dims");
-    print_npy_intp_array(array_dims[4], 1, 2, "ct_dims");
-    print_npy_intp_array(array_dims[5], 1, 2, "GGt_dims");
-    print_npy_intp_array(array_dims[6], 1, 3, "Tt_dims");
-    print_npy_intp_array(array_dims[7], 1, 3, "Zt_dims");
-    print_npy_intp_array(array_dims[8], 1, 3, "HHt_dims");
+    print_npy_intp_array(array_dims[1], 2, 1, "P_dims");
+    print_npy_intp_array(array_dims[2], 2, 1, "yt_dims");
+    print_npy_intp_array(array_dims[3], 2, 1, "dt_dims");
+    print_npy_intp_array(array_dims[4], 2, 1, "ct_dims");
+    print_npy_intp_array(array_dims[5], 2, 1, "GGt_dims");
+    print_npy_intp_array(array_dims[6], 3, 1, "Tt_dims");
+    print_npy_intp_array(array_dims[7], 3, 1, "Zt_dims");
+    print_npy_intp_array(array_dims[8], 3, 1, "HHt_dims");
 
 #endif
 
@@ -260,11 +222,14 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
 
     int incdt = array_dims[3][1] == n;
     int incct = array_dims[4][1] == n;
-    int incTt = array_dims[5][2] == n;
-    int incZt = array_dims[6][2] == n;
+    int incGGt = array_dims[5][1] == n;
+    int incTt = array_dims[6][2] == n;
+    int incZt = array_dims[7][2] == n;
+    int incHHt = array_dims[8][2] == n;
 
 #ifdef DEBUGMODE
     // Print time variant increments:
+    printf("\nincrements:\n");
     printf("incdt: %d\n", incdt);
     printf("incct: %d\n", incct);
     printf("incTt: %d\n", incTt);
@@ -286,7 +251,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
 
 #ifdef DEBUGMODE
     // Print arrays:
-    print_array(x, 1, int_m, "x");
+    print_array(x, int_m, 1, "x");
     print_array(P, int_m, int_m, "P");
     print_array(dt, int_m, 1, "dt");
     print_array(ct, int_d, 1, "ct");
@@ -514,44 +479,6 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // Support for either 1- or 2-dimensional:
-    int incGGt = 0;
-    if (array_ndims[5] > 1)
-    {
-        if (array_dims[5][1] == (npy_intp)1)
-        {
-            incGGt = 0;
-        }
-        else if (array_dims[5][1] == n)
-        {
-            incGGt = 1;
-        }
-        else
-        {
-            PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'GGt' does not equal the number of observations of 'yt'");
-            return NULL;
-        }
-    }
-
-    // Support for either 2- or 3-dimensional:
-    int incHHt = 0;
-    if (array_ndims[8] > 2)
-    {
-        if (array_dims[8][2] == (npy_intp)1)
-        {
-            incHHt = 0;
-        }
-        else if (array_dims[8][2] == n)
-        {
-            incHHt = 1;
-        }
-        else
-        {
-            PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'HHt' does not equal the number of observations of 'yt'");
-            return NULL;
-        }
-    }
-
 #ifdef DEBUGMODE
     // Print algorithm dimensions:
     printf("Debug: n is: (%Id)\n", n);
@@ -560,26 +487,28 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 
     // Print input dimensions:
     print_npy_intp_array(array_dims[0], 1, 1, "x_dims");
-    print_npy_intp_array(array_dims[1], 1, 2, "P_dims");
-    print_npy_intp_array(array_dims[2], 1, 2, "yt_dims");
-    print_npy_intp_array(array_dims[3], 1, 2, "dt_dims");
-    print_npy_intp_array(array_dims[4], 1, 2, "ct_dims");
-    print_npy_intp_array(array_dims[5], 1, 2, "GGt_dims");
-    print_npy_intp_array(array_dims[6], 1, 3, "Tt_dims");
-    print_npy_intp_array(array_dims[7], 1, 3, "Zt_dims");
-    print_npy_intp_array(array_dims[8], 1, 3, "HHt_dims");
+    print_npy_intp_array(array_dims[1], 2, 1, "P_dims");
+    print_npy_intp_array(array_dims[2], 2, 1, "yt_dims");
+    print_npy_intp_array(array_dims[3], 2, 1, "dt_dims");
+    print_npy_intp_array(array_dims[4], 2, 1, "ct_dims");
+    print_npy_intp_array(array_dims[5], 2, 1, "GGt_dims");
+    print_npy_intp_array(array_dims[6], 3, 1, "Tt_dims");
+    print_npy_intp_array(array_dims[7], 3, 1, "Zt_dims");
+    print_npy_intp_array(array_dims[8], 3, 1, "HHt_dims");
 
 #endif
 
     // Fetch increment logic:
-
     int incdt = array_dims[3][1] == n;
     int incct = array_dims[4][1] == n;
-    int incTt = array_dims[5][2] == n;
-    int incZt = array_dims[6][2] == n;
+    int incGGt = array_dims[5][1] == n;
+    int incTt = array_dims[6][2] == n;
+    int incZt = array_dims[7][2] == n;
+    int incHHt = array_dims[8][2] == n;
 
 #ifdef DEBUGMODE
     // Print time variant increments:
+    printf("increments:\n");
     printf("incdt: %d\n", incdt);
     printf("incct: %d\n", incct);
     printf("incTt: %d\n", incTt);
@@ -601,7 +530,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 
 #ifdef DEBUGMODE
     // Print arrays:
-    print_array(x, 1, int_m, "x");
+    print_array(x, int_m, 1, "x");
     print_array(P, int_m, int_m, "P");
     print_array(dt, int_m, 1, "dt");
     print_array(ct, int_d, 1, "ct");
@@ -831,13 +760,13 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
     printf("Debug: d is: (%Id)\n", d);
 
     // Print input dimensions:
-    print_npy_intp_array(array_dims[0], 1, 2, "yt_dims");
-    print_npy_intp_array(array_dims[1], 1, 2, "xtt_dims");
-    print_npy_intp_array(array_dims[2], 1, 3, "Ptt_dims");
-    print_npy_intp_array(array_dims[3], 1, 2, "Ft_inv_dims");
-    print_npy_intp_array(array_dims[5], 1, 3, "Tt_dims");
-    print_npy_intp_array(array_dims[6], 1, 3, "Zt_dims");
-    print_npy_intp_array(array_dims[7], 1, 2, "vt_dims");
+    print_npy_intp_array(array_dims[0], 2, 1, "yt_dims");
+    print_npy_intp_array(array_dims[1], 2, 1, "xtt_dims");
+    print_npy_intp_array(array_dims[2], 3, 1, "Ptt_dims");
+    print_npy_intp_array(array_dims[3], 2, 1, "Ft_inv_dims");
+    print_npy_intp_array(array_dims[5], 3, 1, "Tt_dims");
+    print_npy_intp_array(array_dims[6], 3, 1, "Zt_dims");
+    print_npy_intp_array(array_dims[7], 2, 1, "vt_dims");
 
 #endif
 
