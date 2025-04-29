@@ -102,6 +102,9 @@ void ckalman_filter(
                 // Sequential Processing - Univariate Treatment of the Multivariate Series:
                 for (int SP = 0; SP < d; SP++)
                 {
+#ifdef DEBUGMODE
+                        printf("SP = %i\n", SP);
+#endif
 
                         // Missing measurements are skipped:
                         if (npy_isnan(yt[SP + d * t]))
