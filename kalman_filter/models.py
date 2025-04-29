@@ -80,10 +80,9 @@ class KalmanFilter():
     """
 
     def __post_init__(self):
-        # Explicit n, m, d dimensional compatibility is enforced within the compiled C algorithm implementations.
+        """Coerce input attributes, enforcing compatible dtypes and dimensions (where applicable)"""
 
-        # Coerce inputs, checking for compatible dtypes:
-        # attr, expected ndims:
+        # Enforced ndims for inputs:
         expected_ndims = {
             "x": 1,
             "P": 2,
@@ -95,19 +94,13 @@ class KalmanFilter():
             "GGt": 2
         }
         for attr, ndim in expected_ndims.items():
-            input = getattr(self, attr)
-            # Scalar input support:
-            if np.isscalar(input):
-                input_ndarr = np.ndarray([1] * ndim)
-                input_ndarr[:] = input
-            elif type(input) != np.ndarray:
-                # Iterable support:
-                input_ndarr = np.array(input, dtype="float64")
-            else:
-                # No coercion necessary:
-                continue
-            if input_ndarr.ndim == (ndim - 1):
-                input_ndarr = input_ndarr.reshape(input_ndarr.shape + (1,))
+            input_ndarr = getattr(self, attr)
+            # Enforce np.ndarray:
+            input_ndarr = np.array(input_ndarr, dtype="float64")
+            # Enforce shape to match number of dimensions:
+            for _ in range(ndim - input_ndarr.ndim):
+                input_ndarr = np.expand_dims(
+                    input_ndarr, axis=input_ndarr.ndim)
             setattr(self, attr, input_ndarr)
 
         # yt coercion:
