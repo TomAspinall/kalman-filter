@@ -105,19 +105,16 @@ class KalmanFilter():
 
         # yt coercion:
         # Scalar input support (making implicit assumption that d = 1):
-        if np.isscalar(self.yt):
-            yt_attr = np.ndarray((1, 1))
-            yt_attr[:] = self.yt
-        elif type(self.yt) != np.ndarray:
-            # Iterable input support:
-            yt_attr = np.array(self.yt, dtype="float64")
-            if yt_attr.ndim == 1:
-                # Yt must be transposed into a column vector:
-                yt_attr = yt_attr.reshape((1, len(yt_attr)))
-            elif yt_attr.ndim > 2:
-                raise InputOutOfRange(
-                    "yt must be either scalar, or a 1- or 2-dimensional array-like!")
-            self.yt = yt_attr
+        yt_attr = np.array(self.yt, dtype="float64")
+        if yt_attr.ndim == 0:
+            yt_attr = yt_attr.reshape(shape=(1, 1))
+        # Yt must be a column vector:
+        elif yt_attr.ndim == 1:
+            yt_attr = yt_attr.reshape((1, len(yt_attr)))
+        elif yt_attr.ndim > 2:
+            raise InputOutOfRange(
+                "yt must be either scalar, or a 1- or 2-dimensional array-like!")
+        self.yt = yt_attr
 
         # Enforce Kalman filter dimensions:
         self._input_dimension_checks()
