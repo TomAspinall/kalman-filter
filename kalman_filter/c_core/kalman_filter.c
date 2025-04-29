@@ -45,21 +45,11 @@ void ckalman_filter(
         blasint intminusone = -1;
         double dblone = 1.0, dblminusone = -1.0, dblzero = 0.0;
 
-        // Sequential Processing variables:
-        int N_obs = 0;
+        // Total Measurements (subtracted for each encountered N/A):
+        int N_obs = d * n;
 
         // Time-series iterator:
         int t = 0;
-
-        /* NA detection */
-        int *NAindices = malloc(sizeof(int) * d);
-        int *positions = malloc(sizeof(int) * d);
-
-        /* Reduced arrays when NA's at time t */
-        double *yt_temp = malloc(sizeof(double) * (d - 1));
-        double *ct_temp = malloc(sizeof(double) * (d - 1));
-        double *Zt_temp = malloc(sizeof(double) * (d - 1) * m);
-        double *GGt_temp = malloc(sizeof(double) * (d - 1));
 
         double *Zt_t = malloc(sizeof(double) * (d * m));
         double *Zt_tSP = malloc(sizeof(double) * m);
@@ -96,8 +86,6 @@ void ckalman_filter(
 
                 // Create Zt for time t
                 cblas_dcopy(m_x_d, &Zt[m_x_d * t * incZt], intone, Zt_t, intone);
-                // Increment number of measurements:
-                N_obs += d;
 
                 // Sequential Processing - Univariate Treatment of the Multivariate Series:
                 for (int SP = 0; SP < d; SP++)
@@ -278,14 +266,8 @@ void ckalman_filter(
         // Memory clean - vectors / matrices:
         free(tmpmxSP);
         free(tmpmxm);
-        free(positions);
-        free(yt_temp);
-        free(ct_temp);
-        free(Zt_temp);
-        free(GGt_temp);
         free(Zt_t);
         free(Zt_tSP);
-        free(NAindices);
         free(Kt);
         free(at);
         free(Pt);
