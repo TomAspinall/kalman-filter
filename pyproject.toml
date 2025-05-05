@@ -5,7 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "kalman_filter"
 version = "0.0.1"
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 description = "Fast and efficient Kalman filtering and smoothing"
 authors = [{ name = "Thomas Aspinall", email = "tomaspinall2512@gmail.com" }]
 maintainers = [
@@ -43,4 +44,4 @@ packages = ["kalman_filter", "kalman_filter.c_core"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-kalman_filter = ["*.c", "*.h" , "*.dll"]
+kalman_filter = ["*.c", "*.h", "*.dll"]
