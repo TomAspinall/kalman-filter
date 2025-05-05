@@ -80,10 +80,9 @@ class KalmanFilter():
     """
 
     def __post_init__(self):
-        # Explicit n, m, d dimensional compatibility is enforced within the compiled C algorithm implementations.
+        """Coerce input attributes, enforcing compatible dtypes and dimensions (where applicable)"""
 
-        # Coerce inputs, checking for compatible dtypes:
-        # attr, expected ndims:
+        # Enforced ndims for inputs:
         expected_ndims = {
             "x": 1,
             "P": 2,
@@ -95,34 +94,27 @@ class KalmanFilter():
             "GGt": 2
         }
         for attr, ndim in expected_ndims.items():
-            input = getattr(self, attr)
-            # Scalar input support:
-            if np.isscalar(input):
-                input_ndarr = np.ndarray([1] * ndim)
-                input_ndarr[:] = input
-            elif type(input) != np.ndarray:
-                # Iterable support:
-                input_ndarr = np.array(input, dtype="float64")
-            else:
-                # No coercion necessary:
-                continue
+            input_ndarr = getattr(self, attr)
+            # Enforce np.ndarray:
+            input_ndarr = np.array(input_ndarr, dtype="float64")
+            # Enforce shape to match number of dimensions:
+            for _ in range(ndim - input_ndarr.ndim):
+                input_ndarr = np.expand_dims(
+                    input_ndarr, axis=input_ndarr.ndim)
             setattr(self, attr, input_ndarr)
 
         # yt coercion:
         # Scalar input support (making implicit assumption that d = 1):
-        if np.isscalar(self.yt):
-            yt_attr = np.ndarray((1, 1))
-            yt_attr[:] = self.yt
-        elif type(self.yt) != np.ndarray:
-            # Iterable input support:
-            yt_attr = np.array(self.yt, dtype="float64")
-            if yt_attr.ndim == 1:
-                # Yt must be transposed into a column vector:
-                yt_attr = yt_attr.reshape((1, len(yt_attr)))
-            elif yt_attr.ndim > 2:
-                raise InputOutOfRange(
-                    "yt must be either scalar, or a 1- or 2-dimensional array-like!")
-            self.yt = yt_attr
+        yt_attr = np.array(self.yt, dtype="float64")
+        if yt_attr.ndim == 0:
+            yt_attr = yt_attr.reshape(shape=(1, 1))
+        # Yt must be a column vector:
+        elif yt_attr.ndim == 1:
+            yt_attr = yt_attr.reshape((1, len(yt_attr)))
+        elif yt_attr.ndim > 2:
+            raise InputOutOfRange(
+                "yt must be either scalar, or a 1- or 2-dimensional array-like!")
+        self.yt = yt_attr
 
         # Enforce Kalman filter dimensions:
         self._input_dimension_checks()
@@ -226,7 +218,7 @@ class KalmanFiltered(KalmanFilter):
 
     # Print condensed dimensions rather than arrays, which may be verbose:
     def __repr__(self) -> str:
-        return f"KalmanFiltered(log_likelihood={self.log_likelihood:,.4f}, vt={self.vt.shape}, Kt={self.Kt.shape}, Ft_inv={self.Ft_inv.shape}, xtt={self.xtt.shape}, Ptt={self.Ptt.shape})"
+        return f"KalmanFiltered(log_likelihood= {self.log_likelihood:.4f}, vt={self.vt.shape}, Kt={self.Kt.shape}, Ft_inv={self.Ft_inv.shape}, xtt={self.xtt.shape}, Ptt={self.Ptt.shape})"
 
 
 @dataclass
@@ -247,4 +239,4 @@ class KalmanSmoothed(KalmanFiltered):
 
     # Print condensed dimensions rather than arrays, which may be verbose:
     def __repr__(self) -> str:
-        return f"KalmanSmoothed(log_likelihood={self.log_likelihood:,.4f}, xhatt={self.xhatt.shape}, Vt={self.Vt.shape})"
+        return f"KalmanSmoothed(log_likelihood= {self.log_likelihood:.4f}, xhatt={self.xhatt.shape}, Vt={self.Vt.shape})"

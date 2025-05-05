@@ -1,7 +1,5 @@
-# Import dependencies
 import json
 
-# Import example module:
 import kalman_filter as kf
 
 # Load example data:

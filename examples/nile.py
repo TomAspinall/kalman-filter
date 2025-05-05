@@ -1,7 +1,5 @@
-# Import dependencies
 import json
 
-# Import example module:
 import kalman_filter as kf
 
 # Load example data:
@@ -27,7 +25,7 @@ yt = nile
 # Estimation of the first year flow:
 x = yt[0]
 # Little is known of the initial estimate. Setting a 'diffuse' estimate here:
-P = 10000
+P = 100
 # Set transition and measurement equation arguments:
 dt = 0
 ct = 0

@@ -1,11 +1,11 @@
 #include <Python.h>
 
 void ckalman_filter(
-    // n: the total number of observations
+    // n: the total number of measurements
     int n,
     // m: the dimension of the state vector
     int m,
-    // d: the dimension of observations
+    // d: the dimension of measurements
     int d,
     // Arrays / matrices, are we incrementing on these arrays / matrices?
     double *a0,
