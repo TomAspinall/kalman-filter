@@ -13,8 +13,9 @@ cblas_include_dir = os.path.join(CBLAS_DIR, "include")
 cblas_library_dir = os.path.join(CBLAS_DIR, "lib")
 
 # Copy dll to make wheels self contained:
-copyfile(os.path.join(CBLAS_DIR, 'bin', 'libopenblas.dll'),
-         os.path.join('kalman_filter', 'libopenblas.dll'))
+if os.name == "nt":
+    copyfile(os.path.join(CBLAS_DIR, 'bin', 'libopenblas.dll'),
+             os.path.join('kalman_filter', 'libopenblas.dll'))
 
 # cblas:
 numpy_include_dir = np.get_include()
@@ -23,7 +24,7 @@ c_sources = [os.path.join(src_directory, x)
              for x in os.listdir(src_directory) if x.endswith('.c')]
 
 module = Extension("kalman_filter.c_core", sources=c_sources,
-                   libraries=["libopenblas"],
+                   libraries=["openblas"],
                    include_dirs=[numpy_include_dir,
                                  cblas_include_dir, src_directory, "."],
                    define_macros=[
