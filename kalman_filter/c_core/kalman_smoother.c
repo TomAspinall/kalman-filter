@@ -27,12 +27,14 @@ void ckalman_smoother(
     double *Kt,
     double *Ft_inv,
     double *xtt,
-    double *Ptt)
+    double *Ptt,
+    // Outputs:
+    double *xhatt_output,
+    double *Vt_output)
 {
 
     // integers and double precisions used in dcopy and dgemm
     blasint intone = 1;
-    blasint intminusone = -1;
     double dblone = 1.0, dblminusone = -1.0, dblzero = 0.0;
 
     // Coerce dtypes:
@@ -44,20 +46,18 @@ void ckalman_smoother(
     blasint m_x_m = m * m;
     blasint m_x_d = m * d;
 
+    // Copy xtt & Ptt values into output arrays:
+    cblas_dcopy(blas_m * blas_n, xtt, intone, xhatt_output, intone);
+    cblas_dcopy(blas_m * blas_m * blas_n, Ptt, intone, Vt_output, intone);
+
     /* temporary arrays */
     double *tmpmxm = (double *)calloc(m_x_m, sizeof(double));
-    double *tmpPt = (double *)calloc(m_x_m, sizeof(double));
     double *tmpN = (double *)calloc(m_x_m, sizeof(double));
     double *tmpr = (double *)calloc(m, sizeof(double));
-
-    /* NA detection */
-    int *NAindices = malloc(sizeof(int) * d);
-    int *positions = malloc(sizeof(int) * d);
 
     /* create reduced arrays for SP and when NULL's are present */
     double *Zt_t = malloc(sizeof(double) * (d * m));
     double *Zt_tSP = malloc(sizeof(double) * m);
-    double *Zt_NA = malloc(sizeof(double) * (d - 1) * m);
 
     // Used during smoothing:
     double tmp_scalar;
@@ -85,7 +85,7 @@ void ckalman_smoother(
                     blas_m, intone, blas_m,
                     dblone, &Ptt[m_x_m * t], blas_m,
                     r, blas_m,
-                    dblone, &xtt[m * t], blas_m);
+                    dblone, &xhatt_output[m * t], blas_m);
 
         /* V_t = P_t - P_t %*% N_t-1 %*% P_t */
         // Step 1: tmpmxm = P_t %*% N_t-1:
@@ -96,12 +96,11 @@ void ckalman_smoother(
                     dblzero, tmpmxm, blas_m);
 
         /* Pt[,,i] = Pt[,,i] - tmpmxm%*% Pt[,,i] */
-        cblas_dcopy(m_x_m, &Ptt[m_x_m * t], intone, tmpPt, intone);
         cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
                     blas_m, blas_m, blas_m,
                     dblminusone, tmpmxm, blas_m,
-                    tmpPt, blas_m,
-                    dblone, &Ptt[m_x_m * t], blas_m);
+                    &Ptt[m_x_m * t], blas_m,
+                    dblone, &Vt_output[m_x_m * t], blas_m);
 
         // Move from r_t,0 to r_(t-1),pt:
         // r_(t-1),p_t = t(T_t-1) %*% r_t,0:
@@ -210,14 +209,10 @@ void ckalman_smoother(
 
     // Memory clean - vectors / matrices:
     free(tmpmxm);
-    free(tmpPt);
     free(tmpN);
     free(tmpr);
-    free(NAindices);
-    free(positions);
     free(Zt_t);
     free(Zt_tSP);
-    free(Zt_NA);
     free(N);
     free(r);
     free(L);

@@ -26,4 +26,7 @@ void ckalman_smoother(
     double *Kt,
     double *Ft_inv,
     double *att,
-    double *Ptt);
+    double *Ptt,
+    // Outputs:
+    double *xhatt_output,
+    double *Vt_output);

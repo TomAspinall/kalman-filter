@@ -698,16 +698,16 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
     int int_d;
     if (array_ndims[0] == 2)
     {
-        d = array_dims[2][0];
+        d = array_dims[0][0];
         int_d = (int)d;
-        n = array_dims[2][1];
+        n = array_dims[0][1];
         int_n = (int)n;
     }
     else
     {
         int_d = 1;
         d = (npy_intp)int_d;
-        n = array_dims[2][0];
+        n = array_dims[0][0];
         int_n = (int)n;
     }
 
@@ -801,6 +801,14 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
     print_array(yt, int_d, int_n, "yt");
 #endif
 
+    // Total output sizes:
+    int xhatt_size = int_m * int_n * sizeof(double);
+    int Vt_size = int_m * int_m * int_n * sizeof(double);
+
+    // Generate output data points:
+    double *xhatt_output = (double *)malloc(xhatt_size);
+    double *Vt_output = (double *)malloc(Vt_size);
+
     // Call the Kalman Smoother algorithm:
     ckalman_smoother(
         /* Dimesions*/
@@ -813,15 +821,18 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
         Kt,
         Ft_inv,
         xtt,
-        Ptt);
+        Ptt,
+        // Outputs:
+        xhatt_output,
+        Vt_output);
 
     // Create NumPy arrays from the results:
     PyArrayObject *xhatt = (PyArrayObject *)PyArray_SimpleNew(2, array_dims[1], NPY_DOUBLE);
     PyArrayObject *Vt = (PyArrayObject *)PyArray_SimpleNew(3, array_dims[2], NPY_DOUBLE);
 
     // Copy arrays into numpy objects:
-    memcpy(PyArray_DATA(xhatt), xtt, int_m * int_n * sizeof(double));
-    memcpy(PyArray_DATA(Vt), Ptt, int_m * int_m * int_n * sizeof(double));
+    memcpy(PyArray_DATA(xhatt), xhatt_output, xhatt_size);
+    memcpy(PyArray_DATA(Vt), Vt_output, Vt_size);
 
     // Create a new dictionary:
     PyObject *result_dict = PyDict_New();
