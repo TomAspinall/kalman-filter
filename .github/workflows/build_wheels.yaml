@@ -48,7 +48,7 @@ jobs:
             CBLAS_DIR="${{ env.CBLAS_DIR }}"
             CFLAGS="${{ env.CFLAGS }}"
             LDFLAGS="${{ env.LDFLAGS }}"
-            MACOSX_DEPLOYMENT_TARGET=14.0
+          MACOSX_DEPLOYMENT_TARGET: "14.0"
         with:
           package-dir: .
           output-dir: wheelhouse
