@@ -1,5 +1,6 @@
 import os
 from distutils.core import Extension, setup
+from shutil import copyfile
 
 import numpy as np
 
@@ -10,6 +11,10 @@ CBLAS_DIR = os.getenv("CBLAS_DIR", os.path.join(
     "external", "OpenBLAS-0.3.28-x64-64"))
 cblas_include_dir = os.path.join(CBLAS_DIR, "include")
 cblas_library_dir = os.path.join(CBLAS_DIR, "lib")
+
+# Copy dll to make wheels self contained:
+copyfile(os.path.join(CBLAS_DIR, 'bin', 'libopenblas.dll'),
+         os.path.join('kalman_filter', 'libopenblas.dll'))
 
 # cblas:
 numpy_include_dir = np.get_include()

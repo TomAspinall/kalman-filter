@@ -1,5 +1,6 @@
 include README.md
 include LICENSE
+include kalman_filter/libopenblas.dll
 include external/OpenBLAS-0.3.28-x64-64/lib/*.lib
 recursive-include kalman_filter *.h *.c
 recursive-include external *.h
