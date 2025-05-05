@@ -93,8 +93,6 @@ void ckalman_filter_verbose(
 
                 // Create Zt for time t
                 cblas_dcopy(m_x_d, &Zt[m_x_d * t * incZt], intone, Zt_t, intone);
-                // Increment number of measurements:
-                N_obs += d;
 
                 // Sequential Processing - Univariate Treatment of the Multivariate Series:
                 for (int SP = 0; SP < d; SP++)
@@ -107,7 +105,7 @@ void ckalman_filter_verbose(
                         if (npy_isnan(yt[SP + d * t]))
                         {
                                 // Total observations impacts final log-likelihood calculation:
-                                N_obs -= 1;
+                                N_obs--;
                                 continue;
                         }
 

@@ -98,7 +98,7 @@ void ckalman_filter(
                         if (npy_isnan(yt[SP + d * t]))
                         {
                                 // Total observations impacts final log-likelihood calculation:
-                                N_obs -= 1;
+                                N_obs--;
                                 continue;
                         }
 
