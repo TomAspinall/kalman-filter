@@ -6,7 +6,8 @@ import numpy as np
 # Compiled C code directory:
 src_directory = os.path.join("kalman_filter", "c_core")
 
-CBLAS_DIR = os.path.join("external", "OpenBLAS-0.3.28-x64-64")
+CBLAS_DIR = os.getenv("CBLAS_DIR", os.path.join(
+    "external", "OpenBLAS-0.3.28-x64-64"))
 cblas_include_dir = os.path.join(CBLAS_DIR, "include")
 cblas_library_dir = os.path.join(CBLAS_DIR, "lib")
 
