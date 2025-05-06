@@ -29,13 +29,9 @@ jobs:
         env:
           CIBW_BEFORE_BUILD: |
             python -m pip install scipy-openblas64
-            mkdir -p kalman_filter/.dylibs
-            cp $(python -c "import scipy_openblas64; print(scipy_openblas64.get_lib_dir())") kalman_filter/.dylibs/
-
-            python -m pip install scipy-openblas64
             python -c "
             import scipy_openblas64, shutil, glob, os
-            lib_dir = scipy_openblas64.get_lib_path()
+            lib_dir = scipy_openblas64.get_lib_dir()
             dylibs = glob.glob(os.path.join(lib_dir, '*.dylib'))
             os.makedirs('kalman_filter/.dylibs', exist_ok=True)
             for lib in dylibs:
