@@ -1,6 +1,6 @@
+import glob
 import os
 import shutil
-import sys
 from distutils.core import Extension, setup
 
 import numpy as np
@@ -16,7 +16,7 @@ cblas_library_dir = scipy_openblas64.get_lib_dir()
 
 # Optional: set runtime library search path (-rpath)
 extra_link_args = [
-    "-Wl,-rpath,@loader_path/../.dylibs"] if sys.platform == "darwin" else []
+    "-Wl,-rpath,@loader_path/../.dylibs"]
 
 libraries = [scipy_openblas64.get_library()]
 
@@ -25,14 +25,12 @@ if os.name == "nt":
     dll_file = f'{scipy_openblas64.get_library()}.dll'
     shutil.copyfile(os.path.join(cblas_library_dir, dll_file),
                     os.path.join('kalman_filter', dll_file))
-elif sys.platform == "darwin":
-    import glob
-    import shutil
-    lib_dir = scipy_openblas64.get_lib_dir()
-    dylibs = glob.glob(os.path.join(lib_dir, '*.dylib'))
-    os.makedirs('kalman_filter/.dylibs', exist_ok=True)
-    for lib in dylibs:
-        shutil.copy(lib, 'kalman_filter/.dylibs')
+
+lib_dir = scipy_openblas64.get_lib_dir()
+dylibs = glob.glob(os.path.join(lib_dir, '*.dylib'))
+os.makedirs('kalman_filter/.dylibs', exist_ok=True)
+for lib in dylibs:
+    shutil.copy(lib, 'kalman_filter/.dylibs')
 
 
 # numpy c-api:
