@@ -29,20 +29,13 @@ jobs:
         env:
           CIBW_BEFORE_BUILD: |
             python -m pip install scipy-openblas64
-            python -c "
-            import scipy_openblas64, shutil, glob, os
-            lib_dir = scipy_openblas64.get_lib_dir()
-            dylibs = glob.glob(os.path.join(lib_dir, '*.dylib'))
-            os.makedirs('kalman_filter/.dylibs', exist_ok=True)
-            for lib in dylibs:
-                shutil.copy(lib, 'kalman_filter/.dylibs')
-            "
+            python -c "import scipy_openblas64; print(f'LDFLAGS=-L{scipy_openblas64.get_lib_path()}')" >> $GITHUB_ENV
           CIBW_ENVIRONMENT: |
             LD_LIBRARY_PATH=kalman_filter/.dylibs
             DYLD_LIBRARY_PATH=kalman_filter/.dylibs
+            LDFLAGS="${{ env.LDFLAGS }}"
             # CBLAS_DIR="${{ env.CBLAS_DIR }}"
             # CFLAGS="${{ env.CFLAGS }}"
-            # LDFLAGS="${{ env.LDFLAGS }}"
           MACOSX_DEPLOYMENT_TARGET: "14.0"
         with:
           package-dir: .
