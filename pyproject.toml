@@ -14,7 +14,7 @@ maintainers = [
 ]
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.22"]
+dependencies = ["numpy>=1.22", "scipy-openblas64"]
 keywords = ["Kalman", "Kalman filter", "state space", "state space methods"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
