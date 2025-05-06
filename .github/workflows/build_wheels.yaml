@@ -27,10 +27,16 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.23.3
         env:
-          # CIBW_ENVIRONMENT: |
-          #   CBLAS_DIR="${{ env.CBLAS_DIR }}"
-          #   CFLAGS="${{ env.CFLAGS }}"
-          #   LDFLAGS="${{ env.LDFLAGS }}"
+          CIBW_BEFORE_BUILD: |
+            python -m pip install scipy-openblas64
+            mkdir -p kalman_filter/.dylibs
+            cp $(python -c "import scipy_openblas64; print(scipy_openblas64.get_lib_path())") kalman_filter/.dylibs/
+          CIBW_ENVIRONMENT: |
+            LD_LIBRARY_PATH=kalman_filter/.dylibs
+            DYLD_LIBRARY_PATH=kalman_filter/.dylibs
+            # CBLAS_DIR="${{ env.CBLAS_DIR }}"
+            # CFLAGS="${{ env.CFLAGS }}"
+            # LDFLAGS="${{ env.LDFLAGS }}"
           MACOSX_DEPLOYMENT_TARGET: "14.0"
         with:
           package-dir: .
