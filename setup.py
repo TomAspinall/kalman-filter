@@ -1,7 +1,7 @@
 import os
+import shutil
 import sys
 from distutils.core import Extension, setup
-from shutil import copyfile
 
 import numpy as np
 import scipy_openblas64
@@ -23,8 +23,17 @@ libraries = [scipy_openblas64.get_library()]
 # Copy dll to make wheels self contained:
 if os.name == "nt":
     dll_file = f'{scipy_openblas64.get_library()}.dll'
-    copyfile(os.path.join(cblas_library_dir, dll_file),
-             os.path.join('kalman_filter', dll_file))
+    shutil.copyfile(os.path.join(cblas_library_dir, dll_file),
+                    os.path.join('kalman_filter', dll_file))
+elif sys.platform == "darwin":
+    import glob
+    import shutil
+    lib_dir = scipy_openblas64.get_lib_dir()
+    dylibs = glob.glob(os.path.join(lib_dir, '*.dylib'))
+    dylibs = glob.glob(os.path.join(lib_dir, '*.dll'))
+    os.makedirs('kalman_filter/.dylibs', exist_ok=True)
+    for lib in dylibs:
+        shutil.copy(lib, 'kalman_filter/.dylibs')
 
 
 # numpy c-api:
