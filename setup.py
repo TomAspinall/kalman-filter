@@ -1,4 +1,5 @@
 import os
+import sys
 from distutils.core import Extension, setup
 from shutil import copyfile
 
@@ -9,11 +10,13 @@ import scipy_openblas64
 src_directory = os.path.join("kalman_filter", "c_core")
 
 # openblas:
+cblas_dir = os.path.dirname(scipy_openblas64.get_include_dir())
 cblas_include_dir = scipy_openblas64.get_include_dir()
 cblas_library_dir = scipy_openblas64.get_lib_dir()
 
-print("lib_dir", scipy_openblas64.get_lib_dir())
-print("include_dir", scipy_openblas64.get_include_dir())
+# Optional: set runtime library search path (-rpath)
+extra_link_args = [
+    f"-Wl,-rpath,{cblas_dir}"] if sys.platform == "darwin" else []
 
 libraries = [scipy_openblas64.get_library()]
 
