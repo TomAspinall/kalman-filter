@@ -16,7 +16,7 @@ cblas_library_dir = scipy_openblas64.get_lib_dir()
 
 # Optional: set runtime library search path (-rpath)
 extra_link_args = [
-    f"-Wl,-rpath,{cblas_dir}"] if sys.platform == "darwin" else []
+    "-Wl,-rpath,@loader_path/../.dylibs"] if sys.platform == "darwin" else []
 
 libraries = [scipy_openblas64.get_library()]
 
