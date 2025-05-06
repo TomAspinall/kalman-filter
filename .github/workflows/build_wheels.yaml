@@ -30,7 +30,7 @@ jobs:
           CIBW_BEFORE_BUILD: |
             python -m pip install scipy-openblas64
             mkdir -p kalman_filter/.dylibs
-            cp $(python -c "import scipy_openblas64; print(scipy_openblas64.get_lib_path())") kalman_filter/.dylibs/
+            cp $(python -c "import scipy_openblas64; print(scipy_openblas64.get_lib_dir())") kalman_filter/.dylibs/
           CIBW_ENVIRONMENT: |
             LD_LIBRARY_PATH=kalman_filter/.dylibs
             DYLD_LIBRARY_PATH=kalman_filter/.dylibs
