@@ -29,7 +29,7 @@ jobs:
         env:
           CIBW_BEFORE_BUILD: |
             python -m pip install scipy-openblas64
-            python -c "import scipy_openblas64; print(f'LDFLAGS=-L{scipy_openblas64.get_lib_path()}')" >> $GITHUB_ENV
+            python -c "import scipy_openblas64; print(f'LDFLAGS=-L{scipy_openblas64.get_lib_dir()}')" >> $GITHUB_ENV
           CIBW_ENVIRONMENT: |
             LD_LIBRARY_PATH=kalman_filter/.dylibs
             DYLD_LIBRARY_PATH=kalman_filter/.dylibs
