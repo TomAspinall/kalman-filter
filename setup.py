@@ -30,7 +30,6 @@ elif sys.platform == "darwin":
     import shutil
     lib_dir = scipy_openblas64.get_lib_dir()
     dylibs = glob.glob(os.path.join(lib_dir, '*.dylib'))
-    dylibs = glob.glob(os.path.join(lib_dir, '*.dll'))
     os.makedirs('kalman_filter/.dylibs', exist_ok=True)
     for lib in dylibs:
         shutil.copy(lib, 'kalman_filter/.dylibs')
