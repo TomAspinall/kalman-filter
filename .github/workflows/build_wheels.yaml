@@ -9,8 +9,8 @@ jobs:
     strategy:
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
-        # os: [ubuntu-latest, windows-latest, macos-13, macos-14]
-        os: [ubuntu-latest, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+        # os: [ubuntu-latest, macos-14]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
@@ -24,35 +24,17 @@ jobs:
       - name: Install cibuildwheel
         run: python -m pip install cibuildwheel
 
-      - name: Install OpenBLAS (mac)
-        if: runner.os == 'macOS'
-        run: |
-          brew install openblas
-          echo "CBLAS_DIR=$(brew --prefix openblas)" >> $GITHUB_ENV
-          echo "CFLAGS=-I$(brew --prefix openblas)/include" >> $GITHUB_ENV
-          echo "LDFLAGS=-L$(brew --prefix openblas)/lib" >> $GITHUB_ENV
-
-      - name: Install OpenBLAS (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libopenblas-dev
-          echo "CBLAS_DIR=/usr" >> $GITHUB_ENV
-          echo "CFLAGS=-I/usr/include" >> $GITHUB_ENV
-          echo "LDFLAGS=-L/usr/lib/x86_64-linux-gnu" >> $GITHUB_ENV
-
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.23.3
         env:
-          CIBW_ENVIRONMENT: |
-            CBLAS_DIR="${{ env.CBLAS_DIR }}"
-            CFLAGS="${{ env.CFLAGS }}"
-            LDFLAGS="${{ env.LDFLAGS }}"
+          # CIBW_ENVIRONMENT: |
+          #   CBLAS_DIR="${{ env.CBLAS_DIR }}"
+          #   CFLAGS="${{ env.CFLAGS }}"
+          #   LDFLAGS="${{ env.LDFLAGS }}"
           MACOSX_DEPLOYMENT_TARGET: "14.0"
         with:
           package-dir: .
           output-dir: wheelhouse
-          # config-file: "{package}/pyproject.toml"
 
       - uses: actions/upload-artifact@v4
         with:

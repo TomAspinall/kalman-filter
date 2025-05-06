@@ -69,19 +69,19 @@ void ckalman_filter_verbose(
         double *tmpmxm = (double *)calloc(m_x_m, sizeof(double));
 
         /* at = x */
-        cblas_dcopy(blas_m, x, intone, at, intone);
+        scipy_cblas_dcopy64_(blas_m, x, intone, at, intone);
 
         /* Pt = P */
-        cblas_dcopy(m_x_m, P, intone, Pt, intone);
+        scipy_cblas_dcopy64_(m_x_m, P, intone, Pt, intone);
 
         // initialise att:
-        cblas_dcopy(blas_m, at, intone, &at_output[m * t + m], intone);
+        scipy_cblas_dcopy64_(blas_m, at, intone, &at_output[m * t + m], intone);
         // initialise Ptt:
-        cblas_dcopy(blas_m, Pt, intone, &Pt_output[m * t + m], intone);
+        scipy_cblas_dcopy64_(blas_m, Pt, intone, &Pt_output[m * t + m], intone);
 
         /*Initial State Outputs:*/
-        cblas_dcopy(blas_m, at, intone, &at_output[0], intone);
-        cblas_dcopy(m_x_m, Pt, intone, &Pt_output[0], intone);
+        scipy_cblas_dcopy64_(blas_m, at, intone, &at_output[0], intone);
+        scipy_cblas_dcopy64_(m_x_m, Pt, intone, &Pt_output[0], intone);
 
         // Iterate over all time steps:
         while (t < n)
@@ -92,7 +92,7 @@ void ckalman_filter_verbose(
                 /*********************************************************************************/
 
                 // Create Zt for time t
-                cblas_dcopy(m_x_d, &Zt[m_x_d * t * incZt], intone, Zt_t, intone);
+                scipy_cblas_dcopy64_(m_x_d, &Zt[m_x_d * t * incZt], intone, Zt_t, intone);
 
                 // Sequential Processing - Univariate Treatment of the Multivariate Series:
                 for (int SP = 0; SP < d; SP++)
@@ -110,7 +110,7 @@ void ckalman_filter_verbose(
                         }
 
                         // Get the specific values of Z for SP:
-                        cblas_dcopy(m, &Zt_t[SP], d, Zt_tSP, 1);
+                        scipy_cblas_dcopy64_(m, &Zt_t[SP], d, Zt_tSP, 1);
 
 #ifdef DEBUGMODE
                         print_array(Zt_tSP, m, 1, "Zt_tSP");
@@ -125,11 +125,11 @@ void ckalman_filter_verbose(
 #endif
 
                         // vt[SP,t] = vt[SP,t] - Zt[SP,, t * incZt] %*% at[,t]
-                        cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-                                    intone, intone, blas_m,
-                                    dblminusone, Zt_tSP, intone,
-                                    at, blas_m,
-                                    dblone, &vt_output[SP + d * t], intone);
+                        scipy_cblas_dgemm64_(CblasColMajor, CblasNoTrans, CblasNoTrans,
+                                             intone, intone, blas_m,
+                                             dblminusone, Zt_tSP, intone,
+                                             at, blas_m,
+                                             dblone, &vt_output[SP + d * t], intone);
 
                         // Step 2 - Function of Covariance Matrix:
                         // Compute Ft = Zt[SP,,t * incZt] %*% Pt %*% t(Zt[SP,,t * incZt]) + diag(GGt)[SP]
@@ -137,21 +137,21 @@ void ckalman_filter_verbose(
                         // First, Let us calculate:
                         // tmpmxSP = Pt %*% t(Zt[SP,,t * incZt])
                         // because we use this result twice
-                        cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,
-                                    blas_m, intone, blas_m,
-                                    dblone, Pt, blas_m,
-                                    Zt_tSP, intone,
-                                    dblzero, tmpmxSP, blas_m);
+                        scipy_cblas_dgemm64_(CblasColMajor, CblasNoTrans, CblasTrans,
+                                             blas_m, intone, blas_m,
+                                             dblone, Pt, blas_m,
+                                             Zt_tSP, intone,
+                                             dblzero, tmpmxSP, blas_m);
 
                         // Ft = GGt[SP]
                         Ft = GGt[SP + (d * t * incGGt)];
 
                         // Ft = Zt[SP,,t*incZt] %*% tmpmxSP + Ft
-                        cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-                                    intone, intone, blas_m,
-                                    dblone, Zt_tSP, intone,
-                                    tmpmxSP, blas_m,
-                                    dblone, &Ft, intone);
+                        scipy_cblas_dgemm64_(CblasColMajor, CblasNoTrans, CblasNoTrans,
+                                             intone, intone, blas_m,
+                                             dblone, Zt_tSP, intone,
+                                             tmpmxSP, blas_m,
+                                             dblone, &Ft, intone);
 
                         // Step 3 - Calculate the Kalman Gain:
                         // Compute Kt = Pt %*% t(Zt[SP,,i * incZt]) %*% (1/Ft)
@@ -163,30 +163,30 @@ void ckalman_filter_verbose(
 
                         // We already have tmpSPxm:
                         // Kt = tmpmxSP %*% tmpFtinv
-                        cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-                                    blas_m, intone, intone,
-                                    dblone, tmpmxSP, blas_m,
-                                    &Ft_inv_output[SP + d * t], intone,
-                                    dblzero, &Kt_output[m_x_d * t + (m * SP)], blas_m);
+                        scipy_cblas_dgemm64_(CblasColMajor, CblasNoTrans, CblasNoTrans,
+                                             blas_m, intone, intone,
+                                             dblone, tmpmxSP, blas_m,
+                                             &Ft_inv_output[SP + d * t], intone,
+                                             dblzero, &Kt_output[m_x_d * t + (m * SP)], blas_m);
 
                         // Step 4 - Correct State Vector mean and Covariance:
 
                         // Correction to att based upon prediction error:
                         // att = Kt %*% V + att
-                        cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-                                    blas_m, intone, intone,
-                                    dblone, &Kt_output[m_x_d * t + (m * SP)], blas_m,
-                                    &vt_output[SP + d * t], intone,
-                                    dblone, at, blas_m);
+                        scipy_cblas_dgemm64_(CblasColMajor, CblasNoTrans, CblasNoTrans,
+                                             blas_m, intone, intone,
+                                             dblone, &Kt_output[m_x_d * t + (m * SP)], blas_m,
+                                             &vt_output[SP + d * t], intone,
+                                             dblone, at, blas_m);
 
                         // Correction to covariance based upon Kalman Gain:
                         // ptt = ptt - ptt %*% t(Z[SP,,i * incZt]) %*% t(Ktt)
                         // ptt = ptt - tempmxSP %*% t(Ktt)
-                        cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,
-                                    blas_m, blas_m, intone,
-                                    dblminusone, tmpmxSP, blas_m,
-                                    &Kt_output[m_x_d * t + (m * SP)], blas_m,
-                                    dblone, Pt, blas_m);
+                        scipy_cblas_dgemm64_(CblasColMajor, CblasNoTrans, CblasTrans,
+                                             blas_m, blas_m, intone,
+                                             dblminusone, tmpmxSP, blas_m,
+                                             &Kt_output[m_x_d * t + (m * SP)], blas_m,
+                                             dblone, Pt, blas_m);
 
                         // Step 5 - Update Log-Likelihood Score:
                         *loglik -= 0.5 * (log(Ft) + (vt_output[SP + d * t] * vt_output[SP + d * t] * Ft_inv_output[SP + d * t]));
@@ -209,20 +209,20 @@ void ckalman_filter_verbose(
 #endif
 
                 // tmpmxSP = Tt[,,i * incTt] %*% att[,i]
-                cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-                            blas_m, intone, blas_m,
-                            dblone, &Tt[m_x_m * t * incTt], blas_m,
-                            at, blas_m,
-                            dblzero, tmpmxSP, blas_m);
+                scipy_cblas_dgemm64_(CblasColMajor, CblasNoTrans, CblasNoTrans,
+                                     blas_m, intone, blas_m,
+                                     dblone, &Tt[m_x_m * t * incTt], blas_m,
+                                     at, blas_m,
+                                     dblzero, tmpmxSP, blas_m);
 
                 // save att:
-                cblas_dcopy(blas_m, at, intone, &att_output[m * t], intone);
+                scipy_cblas_dcopy64_(blas_m, at, intone, &att_output[m * t], intone);
                 // save ptt:
-                cblas_dcopy(m_x_m, Pt, intone, &Ptt_output[m_x_m * t], intone);
+                scipy_cblas_dcopy64_(m_x_m, Pt, intone, &Ptt_output[m_x_m * t], intone);
 
                 /* at[,t + 1] = dt[,t] + at[,t] */
-                cblas_dcopy(blas_m, &dt[m * t * incdt], intone, at, intone);
-                cblas_daxpy(blas_m, dblone, tmpmxSP, intone, at, intone);
+                scipy_cblas_dcopy64_(blas_m, &dt[m * t * incdt], intone, at, intone);
+                scipy_cblas_daxpy64_(blas_m, dblone, tmpmxSP, intone, at, intone);
 
 #ifdef DEBUGMODE
                 print_array(at, m, 1, "atp1:");
@@ -234,25 +234,25 @@ void ckalman_filter_verbose(
                 /* ------------------------------------------------------------------------------------- */
 
                 /* tmpmxm = Ptt[,,i] %*% t(Tt[,,i * incTt]) */
-                cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,
-                            blas_m, blas_m, blas_m,
-                            dblone, Pt, blas_m,
-                            &Tt[m_x_m * t * incTt], blas_m,
-                            dblzero, tmpmxm, blas_m);
+                scipy_cblas_dgemm64_(CblasColMajor, CblasNoTrans, CblasTrans,
+                                     blas_m, blas_m, blas_m,
+                                     dblone, Pt, blas_m,
+                                     &Tt[m_x_m * t * incTt], blas_m,
+                                     dblzero, tmpmxm, blas_m);
 
                 /* Pt[,,i + 1] = HHt[,,i * incHHt] */
-                cblas_dcopy(m_x_m, &HHt[m_x_m * t * incHHt], intone, Pt, intone);
+                scipy_cblas_dcopy64_(m_x_m, &HHt[m_x_m * t * incHHt], intone, Pt, intone);
 
 #ifdef DEBUGMODE
                 print_array(&HHt[m_x_m * t * incHHt], m, m, "HHt:");
 #endif
 
                 /* Pt[,,i + 1] = Tt[,,i * incTt] %*% tmpmxm + Pt[,,i + 1] */
-                cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-                            blas_m, blas_m, blas_m,
-                            dblone, &Tt[m_x_m * t * incTt], blas_m,
-                            tmpmxm, blas_m,
-                            dblone, Pt, blas_m);
+                scipy_cblas_dgemm64_(CblasColMajor, CblasNoTrans, CblasNoTrans,
+                                     blas_m, blas_m, blas_m,
+                                     dblone, &Tt[m_x_m * t * incTt], blas_m,
+                                     tmpmxm, blas_m,
+                                     dblone, Pt, blas_m);
 
 #ifdef DEBUGMODE
                 print_array(at, m, 1, "at:");
@@ -261,9 +261,9 @@ void ckalman_filter_verbose(
 #endif
 
                 // save at:
-                cblas_dcopy(blas_m, at, intone, &at_output[m * t + m], intone);
+                scipy_cblas_dcopy64_(blas_m, at, intone, &at_output[m * t + m], intone);
                 // save pt:
-                cblas_dcopy(m_x_m, Pt, intone, &Pt_output[m_x_m * t + m_x_m], intone);
+                scipy_cblas_dcopy64_(m_x_m, Pt, intone, &Pt_output[m_x_m * t + m_x_m], intone);
 
                 // Iterate:
                 t++;

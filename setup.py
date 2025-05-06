@@ -3,28 +3,32 @@ from distutils.core import Extension, setup
 from shutil import copyfile
 
 import numpy as np
+import scipy_openblas64
 
 # Compiled C code directory:
 src_directory = os.path.join("kalman_filter", "c_core")
 
-CBLAS_DIR = os.getenv("CBLAS_DIR", os.path.join(
-    "external", "OpenBLAS-0.3.28-x64-64"))
-cblas_include_dir = os.path.join(CBLAS_DIR, "include")
-cblas_library_dir = os.path.join(CBLAS_DIR, "lib")
+# openblas:
+cblas_include_dir = scipy_openblas64.get_include_dir()
+cblas_library_dir = scipy_openblas64.get_lib_dir()
+
+libraries = [scipy_openblas64.get_library()]
 
 # Copy dll to make wheels self contained:
 if os.name == "nt":
-    copyfile(os.path.join(CBLAS_DIR, 'bin', 'libopenblas.dll'),
-             os.path.join('kalman_filter', 'libopenblas.dll'))
+    dll_file = f'{scipy_openblas64.get_library()}.dll'
+    copyfile(os.path.join(cblas_library_dir, dll_file),
+             os.path.join('kalman_filter', dll_file))
 
-# cblas:
+
+# numpy c-api:
 numpy_include_dir = np.get_include()
 
 c_sources = [os.path.join(src_directory, x)
              for x in os.listdir(src_directory) if x.endswith('.c')]
 
 module = Extension("kalman_filter.c_core", sources=c_sources,
-                   libraries=["openblas"],
+                   libraries=libraries,
                    include_dirs=[numpy_include_dir,
                                  cblas_include_dir, src_directory, "."],
                    define_macros=[
