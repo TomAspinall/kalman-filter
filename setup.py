@@ -12,6 +12,9 @@ src_directory = os.path.join("kalman_filter", "c_core")
 cblas_include_dir = scipy_openblas64.get_include_dir()
 cblas_library_dir = scipy_openblas64.get_lib_dir()
 
+print("lib_dir", scipy_openblas64.get_lib_dir())
+print("include_dir", scipy_openblas64.get_include_dir())
+
 libraries = [scipy_openblas64.get_library()]
 
 # Copy dll to make wheels self contained:
