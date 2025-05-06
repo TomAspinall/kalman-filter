@@ -39,7 +39,8 @@ module = Extension("kalman_filter.c_core", sources=c_sources,
                                  cblas_include_dir, src_directory, "."],
                    define_macros=[
                        ('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')],
-                   library_dirs=[cblas_library_dir])
+                   library_dirs=[cblas_library_dir],
+                   extra_link_args=extra_link_args,)
 
 setup(
     ext_modules=[module],
