@@ -11,3 +11,4 @@ dist
 # Egg metadata
 *.egg-info
 build
+!test/test_*
