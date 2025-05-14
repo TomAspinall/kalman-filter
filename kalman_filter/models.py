@@ -1,14 +1,14 @@
-import inspect
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Iterable
 
 import numpy as np
 
+from .base import BaseClassExtended
 from .exceptions import InputOutOfRange, ShapeIncompatible
 
 
 @dataclass
-class KalmanFilter():
+class KalmanFilter(BaseClassExtended):
     """Kalman Filter compatible object"""
     yt: float | Iterable | np.ndarray
     """`yt`: Observed measurements at each measurement point. N/A's are allowed for missing measurements, with individual measurements skipped at each missing measurement point.
@@ -83,7 +83,7 @@ class KalmanFilter():
         """Coerce input attributes, enforcing compatible dtypes and dimensions (where applicable)"""
 
         # Enforced ndims for inputs:
-        expected_ndims = {
+        self._attr_expected_ndims = {
             "x": 1,
             "P": 2,
             "dt": 2,
@@ -93,7 +93,7 @@ class KalmanFilter():
             "HHt": 3,
             "GGt": 2
         }
-        for attr, ndim in expected_ndims.items():
+        for attr, ndim in self._attr_expected_ndims.items():
             input_ndarr = getattr(self, attr)
             # Enforce np.ndarray:
             input_ndarr = np.array(input_ndarr, dtype="float64")
@@ -145,22 +145,6 @@ class KalmanFilter():
         elif self.Tt.ndim > 2 and self.Tt.shape[2] not in (1, d):
             raise ShapeIncompatible(
                 "`Tt` - `(m, m, d)` dimensions do not match `yt` - `(d, n)`")
-
-    # Make serialisable:
-
-    def to_dict(self):
-        """Return the coerced attributes of a KalmanFilter object as a dictionary"""
-        return asdict(self)
-
-    # Make subscriptable:
-    def __getitem__(self, item):
-        return getattr(self, item)
-
-    # Build class from dict, ignoring additional kwargs:
-    @classmethod
-    def from_dict(cls, input):
-        class_attributes = inspect.signature(cls).parameters
-        return cls(**{k: v for k, v in input.items() if k in class_attributes})
 
     # Print condensed dimensions rather than arrays, which may be verbose:
     def __repr__(self) -> str:
