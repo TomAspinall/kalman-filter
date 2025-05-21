@@ -1,45 +1,73 @@
-import json
-import os
+from functools import partial
 
-from numpy import float64
+import numpy as np
 
 import kalman_filter as kf
-from kalman_filter.base import BaseClassExtended
 
 
-class KalmanFilterBaseTest(BaseClassExtended):
-    """Base class providing an initial load of example measurements, which can then be used to derive a test suite for the example"""
-
-    def __init__(self, measurements_path: str):
-        """Load example measurements as a class attribute"""
-        self.example_measurement_data = self._load_json(measurements_path)
-
-    def _load_json(self, path: str):
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"File not found: {path}")
-        with open(path) as f:
-            return json.load(f)
-
-
-class KalmanFilterTest(KalmanFilterBaseTest):
+class KalmanFilterBaseTest(kf.models.BaseClassExtended):
     """Base class to build a test suite for the kalman-filter module.
 
     arg:
-    - `expected_output_file`: A local path to a `.json` file of expected outputs, which can be coerced into a `KalmanFilterExpectedOutputs` object.
-    - `example_measurements`: A local path to a `.json` file of example measurements, which are loaded as an available attribute: `example_measurement_data`
+    - `test_path`: A local path to a test directory. This directory expects 2 files: `filtere.json` and `smoothed.json`.
     - `absolute_threshold=float(1e-15)` the absolute threshold that results in an assertion success for various array checking between expected outputs and algorithm outputs.
     """
 
-    def __init__(self, example_measurements_path_json: str, expected_output_path_json: str, absolute_threshold=float64(1e-15)):
+    def __init__(self, test_path: str, absolute_threshold=np.float64(1e-15)):
+        self.test_path = test_path
         self.absolute_threshold = absolute_threshold
-        super().__init__(example_measurements_path_json)
 
-        # Load expected output data:
-        self.expected_outputs = self._load_json(expected_output_path_json)
+        # Object for performing filtering and smoothing:
+        self.kalman_filter = kf.KalmanFilter.from_json(
+            f"{test_path}/filtered.json")
+        self.kalman_filter_input = self.kalman_filter.to_dict()
+
+        # Expected output constants for comparison:
+        self.expected_filtered = kf.KalmanFiltered.from_json(
+            f"{test_path}/filtered.json")
+        self.expected_smoothed = kf.KalmanFiltered.from_json(
+            f"{test_path}/smoothed.json")
+
+        # Threshold testing:
+        self.is_close = partial(np.isclose, equal_nan=True,
+                                atol=absolute_threshold)
+
+    # Compare generated vs. expected dictionary outputs:
+    def compare_attributes(self, actual: dict, expected: dict):
+        # Compare filtered output against expected results:
+        for expected_answer_key, expected_answer in expected.items():
+            actual_answer = actual[expected_answer_key]
+            # Is this an iterable?
+            # Within threshold?
+            outside_threshold = ~self.is_close(
+                actual_answer, expected_answer)
+            if hasattr(outside_threshold, "__len__"):
+                try:
+                    assert not outside_threshold.any()
+                except AssertionError:
+                    # Print total incorrect, and the first incorrect value:
+                    total_incorrect = outside_threshold.sum()
+                    incorect_elements = np.where(outside_threshold)
+                    first_incorrect_index = tuple(
+                        x[0] for x in incorect_elements)
+                    first_incorrect_value = float(
+                        expected_answer[first_incorrect_index])
+                    first_expected_value = float(
+                        actual_answer[first_incorrect_index])
+                    incorrect_elements = ', '.join(
+                        [str(x) for x in first_incorrect_index])
+                    raise AssertionError(
+                        f"{expected_answer_key} outside absolute tolerance!. {total_incorrect:,.0f} total failed elements. Element ({incorrect_elements}):  {first_incorrect_value:.04f} != {first_expected_value:.04f}")
+            else:
+                try:
+                    assert not outside_threshold
+                except AssertionError:
+                    raise AssertionError(
+                        f"{expected_answer_key} outside absolute tolerance! {expected_answer} != {actual_answer}")
 
     # Base level tests:
-    def assert_KalmanFilter(self):
-        """Test that the `KalmanFilter` class object can be created successfully"""
+    def test_KalmanFilter(self):
+        """Test that the `KalmanFilter` class object can be created successfully given algorithm inputs"""
         assert isinstance(kf.KalmanFilter(
             **self.kalman_filter_input), kf.KalmanFilter)
         assert isinstance(kf.KalmanFilter.from_dict(
@@ -50,7 +78,43 @@ class KalmanFilterTest(KalmanFilterBaseTest):
 
     def test_ndim(self):
         """Enforce expected dimensions of coerced input class object"""
-        kalman_filter_obj = self.assert_KalmanFilter()
+        kalman_filter_obj = self.test_KalmanFilter()
         for attribute, expected_ndim in kalman_filter_obj._attr_expected_ndims.items():
             assert expected_ndim == kalman_filter_obj.__getattribute__(
                 attribute).ndim
+
+    def test_log_likelihood(self) -> None:
+        kalman_filter_obj = self.test_KalmanFilter()
+        # Calculate log-likelihood:
+        log_likelihood = kf.kalman_filter(kalman_filter_obj)
+        assert self.is_close(
+            log_likelihood, self.expected_filtered.log_likelihood)
+
+    def __repr__(self) -> str:
+        return f"KalmanFilterBaseTest(test_path='{self.test_path}', absolute_threshold={self.absolute_threshold})"
+
+    def test_filtered_outputs(self):
+        # Test class object construction:
+        kf_object = self.test_KalmanFilter()
+
+        # Calculate filtered output:
+        filtered = kf.kalman_filter_verbose(kf_object)
+
+        self.compare_attributes(
+            filtered.to_dict(), self.expected_filtered.to_dict())
+
+    def test_smoothed_outputs(self):
+        # Test class object construction:
+        kf_object = self.test_KalmanFilter()
+
+        # Calculate filtered output:
+        smoothed = kf.kalman_smoother(kf_object)
+
+        self.compare_attributes(
+            smoothed.to_dict(), self.expected_smoothed.to_dict())
+
+    def run_test(self):
+        self.test_ndim()
+        self.test_log_likelihood()
+        self.test_filtered_outputs()
+        self.test_smoothed_outputs()
