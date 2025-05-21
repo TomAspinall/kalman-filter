@@ -137,7 +137,6 @@ void ckalman_smoother(
         // Sequential Processing - Univariate Treatment of the Multivariate Series:
         for (int SP = d - 1; SP > -1; SP--)
         {
-            printf("begin SP = %i,\n d = %i\n t = %i\n", SP, d, t);
             // Missing measurements are skipped:
             if (npy_isnan(yt[SP + (d * t)]))
             {
