@@ -137,14 +137,18 @@ void ckalman_smoother(
         // Sequential Processing - Univariate Treatment of the Multivariate Series:
         for (int SP = d - 1; SP > -1; SP--)
         {
+            printf("begin SP = %i,\n d = %i\n t = %i\n", SP, d, t);
             // Missing measurements are skipped:
-            if (npy_isnan(yt[SP + d * t]))
+            if (npy_isnan(yt[SP + (d * t)]))
             {
                 continue;
             }
 
             // Get the specific values of Z for SP:
-            scipy_cblas_dcopy64_(m, &Zt_t[SP], d, Zt_tSP, 1);
+            for (int j = 0; j < m; j++)
+            {
+                Zt_tSP[j] = Zt_t[SP + j * d];
+            }
 
             /* L_(t,i) = I_m - K_(t,i) %*% Z_(t,i) %*% F_(t,i)^-1 */
 
