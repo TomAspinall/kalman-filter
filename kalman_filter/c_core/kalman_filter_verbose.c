@@ -106,6 +106,8 @@ void ckalman_filter_verbose(
                         {
                                 // Total observations impacts final log-likelihood calculation:
                                 N_obs--;
+                                // Allocate NAN to relevant memory output arrays:
+                                vt_output[SP + d * t] = NAN;
                                 continue;
                         }
 
