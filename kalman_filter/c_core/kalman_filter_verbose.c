@@ -107,7 +107,18 @@ void ckalman_filter_verbose(
                                 // Total observations impacts final log-likelihood calculation:
                                 N_obs--;
                                 // Allocate NAN to relevant memory output arrays:
+
+                                // Scalars:
                                 vt_output[SP + d * t] = NAN;
+                                Ft_inv_output[SP + d * t] = NAN;
+
+                                // Array across dimension m:
+                                // Kt_output[m_x_d * t + (m * SP)]:
+                                for (int kt_nan = 1; kt_nan <= m; kt_nan++)
+                                {
+                                        Kt_output[kt_nan * d * t + (kt_nan * SP)] = NAN;
+                                }
+                                // Skip NAN measurement:
                                 continue;
                         }
 
