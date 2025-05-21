@@ -6,7 +6,7 @@ from typing import Self, Type
 import numpy as np
 
 
-class _KalmanFilterNumpyEncoder:
+class _KalmanFilterNumpyEncoder(json.JSONEncoder):
     """ Special json encoder for writing numpy types """
 
     def default(self, obj):
@@ -65,4 +65,4 @@ class BaseClassExtended:
         output = self.to_dict()
         with open(path, "w") as f:
             json.dump({key: value.tolist() if isinstance(value, np.ndarray) else value for key,
-                      value in output.items()}, f, cls=kwargs.pop("cls", _KalmanFilterNumpyEncoder), **kwargs)
+                      value in output.items()}, f, cls=kwargs.pop("cls", _KalmanFilterNumpyEncoder), indent=kwargs.pop("indent", 2), **kwargs)
