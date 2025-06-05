@@ -102,10 +102,6 @@ void ckalman_filter(
                                 continue;
                         }
 
-#ifdef DEBUGMODE
-                        printf("SP = %i", SP);
-#endif
-
                         // Get the specific values of Z for SP:
                         // scipy_cblas_dcopy64_(m, &Zt_t[SP], d, Zt_tSP, 1);
                         for (int j = 0; j < m; j++)
