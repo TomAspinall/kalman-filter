@@ -114,7 +114,11 @@ class KalmanFilter(BaseClassExtended):
         elif yt_attr.ndim > 2:
             raise InputOutOfRange(
                 "yt must be either scalar, or a 1- or 2-dimensional array-like!")
-        self.yt = yt_attr
+        self.yt = np.ascontiguousarray(yt_attr)
+
+        # Enforce contiugous arrays:
+        for attr in self._attr_expected_ndims.keys():
+            setattr(self, attr, np.ascontiguousarray(getattr(self, attr)))
 
         # Enforce Kalman filter dimensions:
         self._input_dimension_checks()
