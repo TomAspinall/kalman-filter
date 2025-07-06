@@ -697,7 +697,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
     }
 
     // Number of state variables - x:
-    npy_intp m = array_dims[1][0];
+    npy_intp m = array_dims[1][1];
     int int_m = (int)m;
 
     // Max observations per time point (yt[0] or yt[1])
@@ -802,14 +802,14 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
 
 #ifdef DEBUGMODE
     // Print arrays:
-    print_array(xtt, int_m, int_n, "xtt");
-    print_array(vt, int_m, int_n, "vt");
-    print_array_3D(Ptt, int_m, int_m, int_n, "Ptt");
-    print_array(Ft_inv, int_d, int_n, "Ft_inv");
-    print_array_3D(Tt, int_m, int_m, 1, "Tt");
-    print_array_3D(Kt, int_m, int_m, int_n, "Kt");
-    print_array_3D(Zt, int_m, int_d, 1, "Zt");
-    print_array(yt, int_d, int_n, "yt");
+    print_array(xtt, int_n, int_m, "xtt");
+    print_array(vt, int_n, int_m, "vt");
+    print_array_3D(Ptt, int_n, int_m, int_m, "Ptt");
+    print_array(Ft_inv, int_n, int_d, "Ft_inv");
+    print_array_3D(Tt, 1, int_m, int_m, "Tt");
+    print_array_3D(Kt, int_n, int_m, int_m, "Kt");
+    print_array_3D(Zt, 1, int_d, int_m, "Zt");
+    print_array(yt, int_n, int_d, "yt");
 #endif
 
     // Total output sizes:
