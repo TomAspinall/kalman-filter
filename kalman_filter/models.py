@@ -186,7 +186,7 @@ class KalmanFiltered(KalmanFilter):
     """`Kt`: Kalman gain. Used within the Kalman filter to update the state estimate with new measurements. `Kt` balances the uncertainty in the predicted state with the uncertainty in the observation, determining how much the measurements `yt` influcence the state update between measurement points.
     
     Array dimensions:
-     - `(m, d, n)`
+     - `(n, d, m)`
     """
     Ft_inv: np.ndarray
     """The inverse of the prediction error variance matrix. 
@@ -197,15 +197,8 @@ class KalmanFiltered(KalmanFilter):
     Only `Ft_inv[0,0]` will be identical to traditional, matrices based algorithms.
 
     Array dimensions:
-     - `(d, n)`
+     - `(n, d)`
     '"""
-    at: np.ndarray
-    """
-    `at`: predicted state variables.
-
-    Array dimensions:
-     - `(n + 1, m)`
-    """
 
     xtt: np.ndarray
     """
@@ -219,7 +212,7 @@ class KalmanFiltered(KalmanFilter):
     `Ptt`: variance / covariance matrix at each discrete measurement point of filtered state variables.
 
     Array dimensions:
-     - `(m, m, n)`
+     - `(n, m, m)`
     """
 
     # Print condensed dimensions rather than arrays, which may be verbose:
