@@ -76,9 +76,19 @@ void ckalman_smoother(
     // Kalman smoothing iterates backwards:
     int t = n - 1;
 
+#ifdef DEBUGMODE
+    printf("Initial n: %i\n", n);
+    printf("Initial t: %i\n", t);
+    printf("Initial m: %i\n", m);
+    printf("Initial d: %i\n", d);
+#endif
+
     // Iterate over all time steps:
     while (t > -1)
     {
+#ifdef DEBUGMODE
+        printf("t: %i\n", t);
+#endif
 
         /* ahat_t = P_t %*% r_t-1 + a_t */
         scipy_cblas_dgemm64_(CblasColMajor, CblasNoTrans, CblasNoTrans,
@@ -127,6 +137,11 @@ void ckalman_smoother(
                              &Tt[m_x_m * t * incTt], blas_m,
                              dblzero, N, blas_m);
 
+#ifdef DEBUGMODE
+        print_array(N, m, m, "N at start:");
+        print_array(r, m, intone, "r at start:");
+#endif
+
         /*********************************************************************************/
         /* ---------- ---------- ---------- smoothing step ---------- ---------- -------- */
         /*********************************************************************************/
@@ -160,6 +175,9 @@ void ckalman_smoother(
                                  dblminusone, &Kt[m_x_d * t + (m * SP)], blas_m,
                                  Zt_tSP, blas_m,
                                  dblone, L, blas_m);
+#ifdef DEBUGMODE
+            print_array(L, m, m, "L_t,i:");
+#endif
 
             /* N_t,i-1 = t(Z_t,i) %*% F^-1 %*% Z_t,i + t(L) %*% N_t,i %*% L */
             tmp_scalar = Ft_inv[(d * t) + SP];
@@ -169,6 +187,10 @@ void ckalman_smoother(
                                  tmp_scalar, Zt_tSP, blas_m,
                                  Zt_tSP, blas_m,
                                  dblzero, tmpmxm, blas_m);
+#ifdef DEBUGMODE
+            print_array(Zt_tSP, m, 1, "Zt:");
+            print_array(tmpmxm, m, m, "t(Zt) * Ft^-1 * Zt:");
+#endif
 
             // Step 2: tmpN = t(L) %*% N_t,i
             scipy_cblas_dgemm64_(CblasColMajor, CblasTrans, CblasNoTrans,
@@ -176,6 +198,10 @@ void ckalman_smoother(
                                  dblone, L, blas_m,
                                  N, blas_m,
                                  dblzero, tmpN, blas_m);
+
+#ifdef DEBUGMODE
+            print_array(tmpN, m, m, "t(L) * N:");
+#endif
 
             // Step 3: N = tmpN %*% L
             scipy_cblas_dgemm64_(CblasColMajor, CblasNoTrans, CblasNoTrans,
@@ -186,6 +212,11 @@ void ckalman_smoother(
 
             // Step 4: N = N + tmpmxm
             scipy_cblas_daxpy64_(m_x_m, dblone, tmpmxm, intone, N, intone);
+
+#ifdef DEBUGMODE
+            print_array(N, m, m, "t(L) * N * L:");
+            print_array(tmpmxm, m, m, "t(L) * N * L:");
+#endif
 
             /* r_t,i-1 = t(Z_t,i) %*% f_t,i^-1 %*% v_t,i + t(L_t,i) %*% r_t,i */
 
@@ -202,9 +233,12 @@ void ckalman_smoother(
 
             // Step 3: r_t,i-1 = Zt_tmp + r:
             scipy_cblas_daxpy64_(blas_m, tmp_scalar, Zt_tSP, intone, r, intone);
-
-            // Rprintf("SP: %f\n", SP);
         }
+
+#ifdef DEBUGMODE
+        print_array(N, m, m, "N at end:");
+        print_array(r, m, intone, "r at end:");
+#endif
 
         // Iterate backwards through time:
         t--;
