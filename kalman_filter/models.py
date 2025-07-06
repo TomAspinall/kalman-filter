@@ -96,7 +96,7 @@ class KalmanFilter(BaseClassExtended):
         for attr, ndim in self._attr_expected_ndims.items():
             input_ndarr = getattr(self, attr)
             # Enforce np.ndarray:
-            input_ndarr = np.array(input_ndarr, dtype="float64")
+            input_ndarr = np.array(input_ndarr, dtype="float64", order="C")
             # Enforce shape to match number of dimensions:
             for _ in range(ndim - input_ndarr.ndim):
                 input_ndarr = np.expand_dims(
@@ -105,7 +105,7 @@ class KalmanFilter(BaseClassExtended):
 
         # yt coercion:
         # Scalar input support (making implicit assumption that d = 1):
-        yt_attr = np.array(self.yt, dtype="float64")
+        yt_attr = np.array(self.yt, dtype="float64", order="C")
         if yt_attr.ndim == 0:
             yt_attr = yt_attr.reshape(shape=(1, 1))
         # Yt must be a column vector:
