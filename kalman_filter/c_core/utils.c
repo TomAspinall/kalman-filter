@@ -35,7 +35,7 @@ void print_array(double *data, int i, int j, const char *lab)
     {
         for (int jcnt = 0; jcnt < j; jcnt++)
         {
-            printf("%3.6f   ", data[IDX(icnt, jcnt, j)]);
+            printf("%3.6f   ", data[IDX(icnt, jcnt, i)]);
         }
         printf("\n");
     }

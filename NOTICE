@@ -1,0 +1,7 @@
+This project includes third-party code licensed under the following terms:
+
+- Some linear algebra routines are built using the scipy-openblas64 modules,
+  which is licensed under the BSD 2-Clause License.
+  See LICENSES/scipy_openblas64.txt for details.
+
+This software is licensed under the MIT License.
