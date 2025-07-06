@@ -551,12 +551,12 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 
     // Output dimensions:
     npy_intp xtt_dims[2] = {n, m};
-    npy_intp Ptt_dims[3] = {m, m, n};
+    npy_intp Ptt_dims[3] = {n, m, m};
     npy_intp at_dims[2] = {n + 1, m};
     npy_intp Pt_dims[3] = {m, m, n + 1};
-    npy_intp Ft_inv_dims[2] = {d, n};
+    npy_intp Ft_inv_dims[2] = {n, d};
     npy_intp vt_dims[2] = {n, d};
-    npy_intp Kt_dims[3] = {m, d, n};
+    npy_intp Kt_dims[3] = {n, d, m};
 
     // Total output sizes:
     int xtt_size = int_m * int_n * sizeof(double);
