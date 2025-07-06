@@ -706,12 +706,12 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
     npy_intp d;
     int int_n;
     int int_d;
-    if (array_ndims[2] == 2)
+    if (array_ndims[0] == 2)
     {
         // Max observations per time point - yt dim[1]:
-        d = array_dims[2][1];
+        d = array_dims[0][1];
         int_d = (int)d;
-        n = array_dims[2][0];
+        n = array_dims[0][0];
         int_n = (int)n;
     }
     else
