@@ -4,7 +4,7 @@ from typing import Iterable
 import numpy as np
 
 from .base import BaseClassExtended
-from .exceptions import InputOutOfRange, ShapeIncompatible
+from .exceptions import ShapeIncompatible
 
 
 @dataclass
@@ -14,9 +14,9 @@ class KalmanFilter(BaseClassExtended):
     """`yt`: Observed measurements at each measurement point. N/A's are allowed for missing measurements, with individual measurements skipped at each missing measurement point.
     
     Array dimensions:
-     - 2-dimensional `(d, n)` - A `d` number of measurements observed at an `n` number of measurement points.
+     - 2-dimensional `(n, d)` - An `n` number of measurement points observed for a `d` number of measurements.
 
-     Subsequent `KalmanFilter` arguments / algorithm objects must conform to the size of the first and second dimensions of object `yt`: `(d, n)`.
+     Subsequent `KalmanFilter` arguments / algorithm objects must conform to the size of the first and second dimensions of object `yt`: `(n, d)`.
     """
     x: float | Iterable | np.ndarray
     """`x`: initial value / estimation of the state variable(s)
@@ -33,29 +33,29 @@ class KalmanFilter(BaseClassExtended):
     """`dt`: intercept of the transition equation.
     
     Available array dimensions:
-     - 1-dimensional: `(m, 1)` - constant intercept for each transition between measurement points.
-     - 2-dimensional: `(m, n)` - time-varying intercept for each transition between measurement points.
+     - 1-dimensional: `(1, m)` - constant intercept for each transition between measurement points.
+     - 2-dimensional: `(n, m)` - time-varying intercept for each transition between measurement points.
     """
     ct: float | Iterable | np.ndarray
     """`ct`: intercept of the measurement equation.
     
     Available array dimensions:
-     - 1-dimensional: `(d, 1)` - constant intercept to translate state variables into each measurement.
-     - 2-dimensional: `(d, n)` - time-varying intercept to translate state variables into each measurement at each measurement point.
+     - 1-dimensional: `(1, d)` - constant intercept to translate state variables into each measurement.
+     - 2-dimensional: `(n, d)` - time-varying intercept to translate state variables into each measurement at each measurement point.
     """
     Tt: float | Iterable | np.ndarray
     """`Tt`: factor of the transition equation. (i.e., the "slope" of the transition equation)
     
     Available array dimensions:
      - 2-dimensional: `(m, m)` - constant factor for each state variable.
-     - 3-dimensional: `(m, m, d)` - Time-varying factor for each state variable at each measurement point.
+     - 3-dimensional: `(m, m, n)` - Time-varying factor for each state variable at each measurement point.
     """
     Zt: float | Iterable | np.ndarray
     """`Zt`: factor of the measurement equation. (i.e., the "slope" of the measurement equation)
     
     Available array dimensions:
-     - 2-dimensional: `(d, m)` - Constant factor to translate state variable(s) into each measurement.
-     - 3-dimensional: `(d, m, n)` - Time-varying factor to translate state variable(s) into each measurement at each measurement point.
+     - 2-dimensional: `(m, d)` - Constant factor to translate state variable(s) into each measurement.
+     - 3-dimensional: `(m, d, n)` - Time-varying factor to translate state variable(s) into each measurement at each measurement point.
     
     """
     HHt: float | Iterable | np.ndarray
@@ -69,8 +69,8 @@ class KalmanFilter(BaseClassExtended):
     """`GGt`: Diagonal elements of a matrix for the variance of disturbances on the measurement equation. i.e., "white noise" in measurements.
 
     Available array dimensions:
-     - 1-dimensional: `(d, 1)` - Constant disturbances for each measurement at each measurement point.
-     - 2-dimensional: `(d, n)` - Time-varying disturbances for each measurement at each measurement point.
+     - 1-dimensional: `(1, d)` - Constant disturbances for each measurement at each measurement point.
+     - 2-dimensional: `(n, d)` - Time-varying disturbances for each measurement at each measurement point.
     
     Covariance betwen disturbances is not supported. (i.e., multiple measurements at each discrete measurement point cannot have covariance in white noise). The sequential processing algorithm (the algorithm used in the `kalman-filter` module) makes the explicit assumption
     that these observations / measurements are independent, which results in a significantly faster filtering algorithm.
@@ -91,7 +91,8 @@ class KalmanFilter(BaseClassExtended):
             "Tt": 3,
             "Zt": 3,
             "HHt": 3,
-            "GGt": 2
+            "GGt": 2,
+            "yt": 2,
         }
         for attr, ndim in self._attr_expected_ndims.items():
             input_ndarr = getattr(self, attr)
@@ -105,16 +106,16 @@ class KalmanFilter(BaseClassExtended):
 
         # yt coercion:
         # Scalar input support (making implicit assumption that d = 1):
-        yt_attr = np.array(self.yt, dtype="float64", order="C")
-        if yt_attr.ndim == 0:
-            yt_attr = yt_attr.reshape(shape=(1, 1))
-        # Yt must be a column vector:
-        elif yt_attr.ndim == 1:
-            yt_attr = yt_attr.reshape((1, len(yt_attr)))
-        elif yt_attr.ndim > 2:
-            raise InputOutOfRange(
-                "yt must be either scalar, or a 1- or 2-dimensional array-like!")
-        self.yt = np.ascontiguousarray(yt_attr)
+        # yt_attr = np.array(self.yt, dtype="float64", order="C")
+        # if yt_attr.ndim == 0:
+        #     yt_attr = yt_attr.reshape(shape=(1, 1))
+        # # Yt must be a column vector:
+        # elif yt_attr.ndim == 1:
+        #     yt_attr = yt_attr.reshape((1, len(yt_attr)))
+        # elif yt_attr.ndim > 2:
+        #     raise InputOutOfRange(
+        #         "yt must be either scalar, or a 1- or 2-dimensional array-like!")
+        # self.yt = np.ascontiguousarray(yt_attr)
 
         # Enforce contiugous arrays:
         for attr in self._attr_expected_ndims.keys():
@@ -133,12 +134,16 @@ class KalmanFilter(BaseClassExtended):
         if any(x != m for x in self.P.shape):
             raise ShapeIncompatible(
                 "`P` - `(m, m)` dimensions do not match first dimension of `x` - `(m, 1)`")
-        elif self.dt.shape[0] != m:
+        elif self.dt.shape[1] != m:
+            if self.dt.shape[0] == 1:
+                raise ShapeIncompatible(
+                    "`dt` - `(1, m)` dimensions do not match `x` - `(m, 1)`")
+            else:
+                raise ShapeIncompatible(
+                    "`dt` - `(n, m)` dimensions do not match `x` - `(m, 1)`")
+        elif self.dt.shape[0] not in (1, n):
             raise ShapeIncompatible(
-                "`dt` - `(m, d)` dimensions do not match `x` - `(m, 1)`")
-        elif self.dt.ndim > 1 and self.dt.shape[1] not in (1, d):
-            raise ShapeIncompatible(
-                "`dt` - `(m, d)` dimensions do not match `yt` - `(d, n)`")
+                "`dt` - `(n, m)` dimensions do not match `yt` - `(n, d)`")
         elif any(x != m for x in self.Tt.shape[:1]):
             if self.Tt.shape[2] == 1:
                 raise ShapeIncompatible(
@@ -148,7 +153,7 @@ class KalmanFilter(BaseClassExtended):
                     "`Tt` - `(m, m, d)` dimensions do not match `x` - `(m, 1)`")
         elif self.Tt.ndim > 2 and self.Tt.shape[2] not in (1, d):
             raise ShapeIncompatible(
-                "`Tt` - `(m, m, d)` dimensions do not match `yt` - `(d, n)`")
+                "`Tt` - `(m, m, d)` dimensions do not match `yt` - `(n, d)`")
 
     # Print condensed dimensions rather than arrays, which may be verbose:
     def __repr__(self) -> str:
@@ -176,7 +181,7 @@ class KalmanFiltered(KalmanFilter):
     """`Kt`: Kalman gain. Used within the Kalman filter to update the state estimate with new measurements. `Kt` balances the uncertainty in the predicted state with the uncertainty in the observation, determining how much the measurements `yt` influcence the state update between measurement points.
     
     Array dimensions:
-     - `(m, m, n)`
+     - `(m, d, n)`
     """
     Ft_inv: np.ndarray
     """The inverse of the prediction error variance matrix. 
@@ -187,7 +192,7 @@ class KalmanFiltered(KalmanFilter):
     Only `Ft_inv[0,0]` will be identical to traditional, matrices based algorithms.
 
     Array dimensions:
-     - `(m, n)`
+     - `(d, n)`
     '"""
     xtt: np.ndarray
     """

@@ -112,10 +112,10 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     int int_n;
     if (array_ndims[2] == 2)
     {
-        // Max observations per time point - yt dim[0]:
-        d = array_dims[2][0];
+        // Max observations per time point - yt dim[1]:
+        d = array_dims[2][1];
         int_d = (int)d;
-        n = array_dims[2][1];
+        n = array_dims[2][0];
         int_n = (int)n;
     }
     else
@@ -134,9 +134,9 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_ValueError, "dimensions of square matrix 'Pt' do not match length of state vector 'x'");
         return NULL;
     }
-    if (array_dims[3][0] != m)
+    if (array_dims[3][1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 1 of matrix 'dt' does not match length of state vector 'x'");
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of matrix 'dt' does not match length of state vector 'x'");
         return NULL;
     }
     if (array_dims[6][0] != m || array_dims[6][1] != m)
@@ -144,7 +144,7 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'Tt' does not match length of state vector 'x'");
         return NULL;
     }
-    if (array_dims[7][1] != m)
+    if (array_dims[7][0] != m)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 2 of matrix 'Zt' does not match length of state vector 'x'");
         return NULL;
@@ -156,46 +156,51 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     }
 
     // Total observations (n):
-    if (array_ndims[3] > 1 && array_dims[3][1] != n && array_dims[3][1] != 1)
+    if (array_dims[3][0] != n && array_dims[3][0] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'dt' does not match either 1 or number of observations/columns of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'dt' does not match either 1 or number of observations/length of 'yt'");
         return NULL;
     }
-    if (array_ndims[4] > 1 && array_dims[4][1] != n && array_dims[4][1] != 1)
+    if (array_dims[4][0] != n && array_dims[4][0] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not match either 1 or number of observations/columns of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'ct' does not match either 1 or number of observations/length of 'yt'");
         return NULL;
     }
-    if (array_ndims[5] > 1 && array_dims[5][1] != n && array_dims[5][1] != 1)
+    if (array_dims[5][0] != n && array_dims[5][0] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'GGt' does not match either 1 or number of observations/columns of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'GGt' does not match either 1 or number of observations/length of 'yt'");
         return NULL;
     }
     if (array_ndims[6] > 2 && array_dims[6][2] != n && array_dims[6][2] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Tt' does not match either 1 or number of observations/columns of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Tt' does not match either 1 or number of observations/length of 'yt'");
         return NULL;
     }
     if (array_ndims[7] > 2 && array_dims[7][2] != n && array_dims[7][2] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Zt' does not match either 1 or number of observations/columns of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Zt' does not match either 1 or number of observations/length of 'yt'");
         return NULL;
     }
     if (array_ndims[8] > 2 && array_dims[8][2] != n && array_dims[8][2] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'HHt' does not match either 1 or number of observations/columns of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'HHt' does not match either 1 or number of observations/length of 'yt'");
         return NULL;
     }
 
     // Max observations per time point (d):
-    if (array_dims[4][0] != d)
+    if (array_ndims[4] > 1 && array_dims[4][1] != d)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'ct' does not equal dimension 0 of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not equal dimension 1 of 'yt'");
         return NULL;
     }
-    if (array_dims[7][0] != d)
+    if (array_ndims[5] > 1 && array_dims[5][1] != d)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'Zt' does not equal dimension 0 of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not equal dimension 1 of 'yt'");
+        return NULL;
+    }
+    if (array_ndims[7] > 1 && array_dims[7][1] != d)
+    {
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'Zt' does not equal dimension 0 of 'yt'");
         return NULL;
     }
 
@@ -220,9 +225,9 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
 
     // Fetch increment logic:
 
-    int incdt = array_dims[3][1] == n;
-    int incct = array_dims[4][1] == n;
-    int incGGt = array_dims[5][1] == n;
+    int incdt = array_dims[3][0] == n;
+    int incct = array_dims[4][0] == n;
+    int incGGt = array_dims[5][0] == n;
     int incTt = array_dims[6][2] == n;
     int incZt = array_dims[7][2] == n;
     int incHHt = array_dims[8][2] == n;
@@ -254,9 +259,9 @@ static PyObject *kalman_filter(PyObject *self, PyObject *args)
     print_array(x, int_m, 1, "x");
     print_array(P, int_m, int_m, "P");
     print_array(dt, int_m, 1, "dt");
-    print_array(ct, int_d, 1, "ct");
+    print_array(ct, 1, int_d, "ct");
     print_array_3D(Tt, int_m, int_m, 1, "Tt");
-    print_array_3D(Zt, int_d, int_m, 1, "Zt");
+    print_array_3D(Zt, int_m, int_d, 1, "Zt");
     print_array(yt, int_d, int_n, "yt");
 #endif
 
@@ -392,10 +397,10 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     int int_n;
     if (array_ndims[2] == 2)
     {
-        // Max observations per time point - yt dim[0]:
-        d = array_dims[2][0];
+        // Max observations per time point - yt dim[1]:
+        d = array_dims[2][1];
         int_d = (int)d;
-        n = array_dims[2][1];
+        n = array_dims[2][0];
         int_n = (int)n;
     }
     else
@@ -414,9 +419,9 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_ValueError, "dimensions of square matrix 'Pt' do not match length of state vector 'x'");
         return NULL;
     }
-    if (array_dims[3][0] != m)
+    if (array_dims[3][1] != m)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 1 of matrix 'dt' does not match length of state vector 'x'");
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of matrix 'dt' does not match length of state vector 'x'");
         return NULL;
     }
     if (array_dims[6][0] != m || array_dims[6][1] != m)
@@ -424,7 +429,7 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_ValueError, "dimensions 1 or 2 of matrix 'Tt' does not match length of state vector 'x'");
         return NULL;
     }
-    if (array_dims[7][1] != m)
+    if (array_dims[7][0] != m)
     {
         PyErr_SetString(PyExc_ValueError, "dimension 2 of matrix 'Zt' does not match length of state vector 'x'");
         return NULL;
@@ -436,46 +441,51 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     }
 
     // Total observations (n):
-    if (array_ndims[3] > 1 && array_dims[3][1] != n && array_dims[3][1] != 1)
+    if (array_dims[3][0] != n && array_dims[3][0] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'dt' does not match either 1 or number of observations/columns of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'dt' does not match either 1 or number of observations/length of 'yt'");
         return NULL;
     }
-    if (array_ndims[4] > 1 && array_dims[4][1] != n && array_dims[4][1] != 1)
+    if (array_dims[4][0] != n && array_dims[4][0] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not match either 1 or number of observations/columns of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'ct' does not match either 1 or number of observations/length of 'yt'");
         return NULL;
     }
-    if (array_ndims[5] > 1 && array_dims[5][1] != n && array_dims[5][1] != 1)
+    if (array_dims[5][0] != n && array_dims[5][0] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'GGt' does not match either 1 or number of observations/columns of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'GGt' does not match either 1 or number of observations/length of 'yt'");
         return NULL;
     }
     if (array_ndims[6] > 2 && array_dims[6][2] != n && array_dims[6][2] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Tt' does not match either 1 or number of observations/columns of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Tt' does not match either 1 or number of observations/length of 'yt'");
         return NULL;
     }
     if (array_ndims[7] > 2 && array_dims[7][2] != n && array_dims[7][2] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Zt' does not match either 1 or number of observations/columns of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'Zt' does not match either 1 or number of observations/length of 'yt'");
         return NULL;
     }
     if (array_ndims[8] > 2 && array_dims[8][2] != n && array_dims[8][2] != 1)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'HHt' does not match either 1 or number of observations/columns of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 3 of ndarray 'HHt' does not match either 1 or number of observations/length of 'yt'");
         return NULL;
     }
 
     // Max observations per time point (d):
-    if (array_dims[4][0] != d)
+    if (array_ndims[4] > 1 && array_dims[4][1] != d)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'ct' does not equal dimension 0 of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not equal dimension 1 of 'yt'");
         return NULL;
     }
-    if (array_dims[7][0] != d)
+    if (array_ndims[5] > 1 && array_dims[5][1] != d)
     {
-        PyErr_SetString(PyExc_ValueError, "dimension 1 of ndarray 'Zt' does not equal dimension 0 of 'yt'");
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'ct' does not equal dimension 1 of 'yt'");
+        return NULL;
+    }
+    if (array_ndims[7] > 1 && array_dims[7][1] != d)
+    {
+        PyErr_SetString(PyExc_ValueError, "dimension 2 of ndarray 'Zt' does not equal dimension 0 of 'yt'");
         return NULL;
     }
 
@@ -499,9 +509,9 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
 #endif
 
     // Fetch increment logic:
-    int incdt = array_dims[3][1] == n;
-    int incct = array_dims[4][1] == n;
-    int incGGt = array_dims[5][1] == n;
+    int incdt = array_dims[3][0] == n;
+    int incct = array_dims[4][0] == n;
+    int incGGt = array_dims[5][0] == n;
     int incTt = array_dims[6][2] == n;
     int incZt = array_dims[7][2] == n;
     int incHHt = array_dims[8][2] == n;
@@ -533,9 +543,9 @@ static PyObject *kalman_filter_verbose(PyObject *self, PyObject *args)
     print_array(x, int_m, 1, "x");
     print_array(P, int_m, int_m, "P");
     print_array(dt, int_m, 1, "dt");
-    print_array(ct, int_d, 1, "ct");
+    print_array(ct, 1, int_d, "ct");
     print_array_3D(Tt, int_m, int_m, 1, "Tt");
-    print_array_3D(Zt, int_d, int_m, 1, "Zt");
+    print_array_3D(Zt, int_m, int_d, 1, "Zt");
     print_array(yt, int_d, int_n, "yt");
 #endif
 
@@ -696,11 +706,12 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
     npy_intp d;
     int int_n;
     int int_d;
-    if (array_ndims[0] == 2)
+    if (array_ndims[2] == 2)
     {
-        d = array_dims[0][0];
+        // Max observations per time point - yt dim[1]:
+        d = array_dims[2][1];
         int_d = (int)d;
-        n = array_dims[0][1];
+        n = array_dims[2][0];
         int_n = (int)n;
     }
     else
@@ -797,7 +808,7 @@ static PyObject *kalman_smoother(PyObject *self, PyObject *args)
     print_array(Ft_inv, int_d, int_n, "Ft_inv");
     print_array_3D(Tt, int_m, int_m, 1, "Tt");
     print_array_3D(Kt, int_m, int_m, int_n, "Kt");
-    print_array_3D(Zt, int_d, int_m, 1, "Zt");
+    print_array_3D(Zt, int_m, int_d, 1, "Zt");
     print_array(yt, int_d, int_n, "yt");
 #endif
 
