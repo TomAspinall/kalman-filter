@@ -104,20 +104,7 @@ class KalmanFilter(BaseClassExtended):
                     input_ndarr, axis=input_ndarr.ndim)
             setattr(self, attr, input_ndarr)
 
-        # yt coercion:
-        # Scalar input support (making implicit assumption that d = 1):
-        # yt_attr = np.array(self.yt, dtype="float64", order="C")
-        # if yt_attr.ndim == 0:
-        #     yt_attr = yt_attr.reshape(shape=(1, 1))
-        # # Yt must be a column vector:
-        # elif yt_attr.ndim == 1:
-        #     yt_attr = yt_attr.reshape((1, len(yt_attr)))
-        # elif yt_attr.ndim > 2:
-        #     raise InputOutOfRange(
-        #         "yt must be either scalar, or a 1- or 2-dimensional array-like!")
-        # self.yt = np.ascontiguousarray(yt_attr)
-
-        # Enforce contiugous arrays:
+        # Enforce contiguous arrays:
         for attr in self._attr_expected_ndims.keys():
             setattr(self, attr, np.ascontiguousarray(getattr(self, attr)))
 
