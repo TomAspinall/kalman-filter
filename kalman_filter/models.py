@@ -176,7 +176,12 @@ class KalmanFiltered(KalmanFilter):
     """`log_likelihood`: calculated log-likelihood of observed state variables fit to measurements. This log-likelihood quantifies the goodness of fit between the models' predicted states and the measured observations, based on the input parameters.
     """
     vt: np.ndarray
-    """Known as the innovation prediction error."""
+    """Known as the innovation prediction error.
+    Array dimensions:
+
+    - `(n, d)`
+
+    """
     Kt: np.ndarray
     """`Kt`: Kalman gain. Used within the Kalman filter to update the state estimate with new measurements. `Kt` balances the uncertainty in the predicted state with the uncertainty in the observation, determining how much the measurements `yt` influcence the state update between measurement points.
     
@@ -194,12 +199,20 @@ class KalmanFiltered(KalmanFilter):
     Array dimensions:
      - `(d, n)`
     '"""
+    at: np.ndarray
+    """
+    `at`: predicted state variables.
+
+    Array dimensions:
+     - `(n + 1, m)`
+    """
+
     xtt: np.ndarray
     """
     `xtt`: filtered state variables.
 
     Array dimensions:
-     - `(m, n)`
+     - `(n, m)`
     """
     Ptt: np.ndarray
     """
