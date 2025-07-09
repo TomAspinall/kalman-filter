@@ -26,6 +26,9 @@ class KalmanFilter(BaseClassExtended):
     """
     P: float | Iterable | np.ndarray
     """`P`: initial variance of state variables `x`. 
+
+    Array dimensions:
+     - 2-dimensional `(m, m)`
     
     When little is known about the initial variance of state variables, it is common to instatiate with large initial diagonal values (diffusion variance matrix).
     """
