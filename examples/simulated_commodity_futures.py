@@ -5,27 +5,22 @@ import kalman_filter as kf
 yt = np.genfromtxt('data/simulated_commodity_futures.csv',
                    delimiter=",")
 
-yt = yt.transpose()
-
-# yt = yt[:, :10]
-# yt.fill(1)
-
 # Develop a two-state variable, multi-measurement, time-varying measurement payload for the `kalman-filter` module:
 
 # Total measurements, maximum measurements per measurement point:
-d, n = yt.shape
+n, d = yt.shape
 # Total state variables:
 m = 2
 # Input arguments must adhere to these dimesions.
 
 x = [3.1307, 0]
 P = [[100, 0], [0, 100]]
-dt = [-0.000236, 0]
+dt = [[-0.000236, 0]]
 Tt = [[1, 0], [0, 0.972]]
 HHt = [[0.0003966981, 0.000231467], [0.0002314670, 0.001500735]]
-ct = np.ndarray((d, n))
-GGt = np.ndarray((d, n))
-Zt = np.ndarray((d, m, n))
+ct = np.ndarray((n, d))
+GGt = np.ndarray((n, d))
+Zt = np.ndarray((m, d, n))
 
 # Set dynamic time-varying arrays to constants for example purposes:
 GGt[:] = 0.0016
